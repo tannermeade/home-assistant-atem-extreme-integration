@@ -1,0 +1,226 @@
+[
+  {
+    "name": ".devcontainer.json",
+    "path": ".devcontainer.json",
+    "sha": "3c550f23a8ddd864e4b451d3b0cb803edfac364f",
+    "size": 1519,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.devcontainer.json?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/.devcontainer.json",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/3c550f23a8ddd864e4b451d3b0cb803edfac364f",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/.devcontainer.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.devcontainer.json?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/3c550f23a8ddd864e4b451d3b0cb803edfac364f",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/.devcontainer.json"
+    }
+  },
+  {
+    "name": ".env",
+    "path": ".env",
+    "sha": "dda38027a943f3309792aa33e3cbfde39edb4439",
+    "size": 60,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.env?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/.env",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/dda38027a943f3309792aa33e3cbfde39edb4439",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/.env",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.env?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/dda38027a943f3309792aa33e3cbfde39edb4439",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/.env"
+    }
+  },
+  {
+    "name": ".gitattributes",
+    "path": ".gitattributes",
+    "sha": "94f480de94e1d767531580401cbf13844868e82b",
+    "size": 18,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.gitattributes?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/.gitattributes",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/94f480de94e1d767531580401cbf13844868e82b",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/.gitattributes",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.gitattributes?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/94f480de94e1d767531580401cbf13844868e82b",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/.gitattributes"
+    }
+  },
+  {
+    "name": ".github",
+    "path": ".github",
+    "sha": "2caf868e8dd33124bbfe316cfc39b8443a57fbcc",
+    "size": 0,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.github?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/tree/main/.github",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/2caf868e8dd33124bbfe316cfc39b8443a57fbcc",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.github?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/2caf868e8dd33124bbfe316cfc39b8443a57fbcc",
+      "html": "https://github.com/stblassitude/atem-switcher/tree/main/.github"
+    }
+  },
+  {
+    "name": ".gitignore",
+    "path": ".gitignore",
+    "sha": "1974de11de0361ba0ad20673ee60cb9a6a4f3329",
+    "size": 189,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.gitignore?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/.gitignore",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/1974de11de0361ba0ad20673ee60cb9a6a4f3329",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/.gitignore",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.gitignore?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/1974de11de0361ba0ad20673ee60cb9a6a4f3329",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/.gitignore"
+    }
+  },
+  {
+    "name": ".ruff.toml",
+    "path": ".ruff.toml",
+    "sha": "62e029b33488451f6e28ab3d5a742f62280b7234",
+    "size": 618,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.ruff.toml?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/.ruff.toml",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/62e029b33488451f6e28ab3d5a742f62280b7234",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/.ruff.toml",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/.ruff.toml?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/62e029b33488451f6e28ab3d5a742f62280b7234",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/.ruff.toml"
+    }
+  },
+  {
+    "name": "CONTRIBUTING.md",
+    "path": "CONTRIBUTING.md",
+    "sha": "d4393fad2f5df7d4981a0b2b7b641a87b25d2a76",
+    "size": 2209,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/CONTRIBUTING.md?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/CONTRIBUTING.md",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/d4393fad2f5df7d4981a0b2b7b641a87b25d2a76",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/CONTRIBUTING.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/CONTRIBUTING.md?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/d4393fad2f5df7d4981a0b2b7b641a87b25d2a76",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/CONTRIBUTING.md"
+    }
+  },
+  {
+    "name": "LICENSE",
+    "path": "LICENSE",
+    "sha": "4c030dfefe237964d870f2ff3c75aa2212b17ac7",
+    "size": 1089,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/LICENSE?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/LICENSE",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/4c030dfefe237964d870f2ff3c75aa2212b17ac7",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/LICENSE",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/LICENSE?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/4c030dfefe237964d870f2ff3c75aa2212b17ac7",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/LICENSE"
+    }
+  },
+  {
+    "name": "README.md",
+    "path": "README.md",
+    "sha": "697fee8850d7c273c0d2af578e9ce6b40ed8875d",
+    "size": 944,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/README.md?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/README.md",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/697fee8850d7c273c0d2af578e9ce6b40ed8875d",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/README.md",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/README.md?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/697fee8850d7c273c0d2af578e9ce6b40ed8875d",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/README.md"
+    }
+  },
+  {
+    "name": "config",
+    "path": "config",
+    "sha": "3260167d695a8eb239efac6fcc9eb7cc96302e67",
+    "size": 0,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/config?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/tree/main/config",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/3260167d695a8eb239efac6fcc9eb7cc96302e67",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/config?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/3260167d695a8eb239efac6fcc9eb7cc96302e67",
+      "html": "https://github.com/stblassitude/atem-switcher/tree/main/config"
+    }
+  },
+  {
+    "name": "custom_components",
+    "path": "custom_components",
+    "sha": "4220098815edb2ccb680d28b7a495246b21b22f9",
+    "size": 0,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/custom_components?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/tree/main/custom_components",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/4220098815edb2ccb680d28b7a495246b21b22f9",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/custom_components?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/4220098815edb2ccb680d28b7a495246b21b22f9",
+      "html": "https://github.com/stblassitude/atem-switcher/tree/main/custom_components"
+    }
+  },
+  {
+    "name": "hacs.json",
+    "path": "hacs.json",
+    "sha": "77ae6ff3db4bb4818ce78b7fbb48511dc4ba8d6b",
+    "size": 84,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/hacs.json?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/hacs.json",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/77ae6ff3db4bb4818ce78b7fbb48511dc4ba8d6b",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/hacs.json",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/hacs.json?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/77ae6ff3db4bb4818ce78b7fbb48511dc4ba8d6b",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/hacs.json"
+    }
+  },
+  {
+    "name": "requirements.txt",
+    "path": "requirements.txt",
+    "sha": "6762848484ac270c046997fe730d91e59882cf19",
+    "size": 82,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/requirements.txt?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/blob/main/requirements.txt",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/6762848484ac270c046997fe730d91e59882cf19",
+    "download_url": "https://raw.githubusercontent.com/stblassitude/atem-switcher/main/requirements.txt",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/requirements.txt?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/blobs/6762848484ac270c046997fe730d91e59882cf19",
+      "html": "https://github.com/stblassitude/atem-switcher/blob/main/requirements.txt"
+    }
+  },
+  {
+    "name": "scripts",
+    "path": "scripts",
+    "sha": "73bf54c9015a36dcaf7ba49e7c8b14a0a329609a",
+    "size": 0,
+    "url": "https://api.github.com/repos/stblassitude/atem-switcher/contents/scripts?ref=main",
+    "html_url": "https://github.com/stblassitude/atem-switcher/tree/main/scripts",
+    "git_url": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/73bf54c9015a36dcaf7ba49e7c8b14a0a329609a",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/stblassitude/atem-switcher/contents/scripts?ref=main",
+      "git": "https://api.github.com/repos/stblassitude/atem-switcher/git/trees/73bf54c9015a36dcaf7ba49e7c8b14a0a329609a",
+      "html": "https://github.com/stblassitude/atem-switcher/tree/main/scripts"
+    }
+  }
+]

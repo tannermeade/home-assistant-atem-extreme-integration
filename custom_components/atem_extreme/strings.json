@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to ATEM",
+        "description": "The switcher must be reachable on the network. Audio meters are sampled down from the switcher's 10 Hz Fairlight stream.",
+        "data": {
+          "host": "Host",
+          "port": "UDP port",
+          "meter_hz": "Audio meter rate (Hz)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not complete the ATEM handshake. Check the IP, that the switcher is on, and that port 9910/UDP is open.",
+      "fully_booked": "The switcher refused the connection because too many control clients are already connected.",
+      "invalid_host": "Enter a hostname or IP and a valid port.",
+      "unknown": "Unexpected error while connecting."
+    },
+    "abort": {
+      "already_configured": "This switcher is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ATEM options",
+        "data": {
+          "meter_hz": "Audio meter rate (Hz)"
+        }
+      }
+    }
+  }
+}

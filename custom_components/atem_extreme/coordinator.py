@@ -1,0 +1,69 @@
+"""Push coordinator. The switcher is not polled; meters are sampled down."""
+
+from __future__ import annotations
+
+from datetime import timedelta
+import logging
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+from .atem.client import AtemClient
+from .atem.state import AtemState
+from .const import CONF_HOST, CONF_METER_HZ, CONF_PORT, DEFAULT_METER_HZ, DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
+
+
+class AtemCoordinator(DataUpdateCoordinator[AtemState]):
+    """Holds the switcher client and fans state out to entities."""
+
+    def __init__(self, hass: HomeAssistant, entry) -> None:
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=None)
+        self.entry = entry
+        self.entry_id = entry.entry_id
+        self.meter_hz = int(
+            entry.options.get(CONF_METER_HZ, entry.data.get(CONF_METER_HZ, DEFAULT_METER_HZ))
+        )
+        self.meters: DataUpdateCoordinator[float] = DataUpdateCoordinator(
+            hass,
+            _LOGGER,
+            name=f"{DOMAIN}_meters",
+            update_interval=None,
+        )
+        self.client = AtemClient(
+            entry.data[CONF_HOST],
+            int(entry.data[CONF_PORT]),
+            on_state=self._on_state,
+            on_connection=self._on_connection,
+        )
+        self._meter_unsub = None
+
+    async def async_start(self) -> None:
+        await self.client.start()
+        await self.client.wait_until_ready(12)
+        self.async_set_updated_data(self.client.snapshot())
+        interval = timedelta(seconds=1.0 / self.meter_hz)
+        self._meter_unsub = async_track_time_interval(self.hass, self._publish_meters, interval)
+
+    async def async_shutdown(self) -> None:
+        if self._meter_unsub:
+            self._meter_unsub()
+            self._meter_unsub = None
+        await self.client.stop()
+
+    def _on_state(self, client: AtemClient) -> None:
+        self.async_set_updated_data(client.snapshot())
+
+    def _on_connection(self, connected: bool) -> None:
+        _LOGGER.info("ATEM %s %s", self.client.host, "connected" if connected else "disconnected")
+        # Notify even when the snapshot is unchanged so availability flips.
+        self.async_set_updated_data(self.client.snapshot())
+
+    async def _publish_meters(self, _now) -> None:
+        if not self.client.connected:
+            return
+        # The payload is only a tick. Sensors read the live meter values so a
+        # quiet input still resolves, and we never store 10 Hz history.
+        self.meters.async_set_updated_data(self.hass.loop.time())
