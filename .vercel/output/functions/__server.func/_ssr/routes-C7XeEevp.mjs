@@ -1,6 +1,6 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { K as require_react, b as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-fcS6ImX3.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-C7XeEevp.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var INPUTS = [
@@ -123,6 +123,16 @@ var GROUPS = [
 				"Read-only"
 			],
 			[
+				"HDMI / mic talking",
+				"binary sensor",
+				"Read-only"
+			],
+			[
+				"Talking threshold",
+				"number",
+				"Config"
+			],
+			[
 				"Mic 1 and Mic 2 level",
 				"sensor",
 				"Read-only"
@@ -207,6 +217,8 @@ function Home() {
 	const [meters, setMeters] = (0, import_react.useState)(() => INPUTS.map(() => -28));
 	const [mics, setMics] = (0, import_react.useState)([-18, -22]);
 	const [master, setMaster] = (0, import_react.useState)(-14);
+	const [thresholds, setThresholds] = (0, import_react.useState)(() => INPUTS.map(() => -40));
+	const [micThresholds, setMicThresholds] = (0, import_react.useState)([-40, -40]);
 	(0, import_react.useEffect)(() => {
 		const id = window.setInterval(() => {
 			const walk = (value, floor) => {
@@ -389,6 +401,66 @@ function Home() {
 						]
 					})]
 				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+					className: "panel p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								className: "text-sm font-medium tracking-wide",
+								children: "Talking sensors"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 max-w-2xl text-sm leading-relaxed text-[#b7b2a8]",
+								children: "Each strip gets a boolean and a threshold. Talking turns on when that strip's level is at or above the number. These three are the close-ups and the wide shot. Mics get the same pair if the voices are on the XLRs instead of the HDMI audio."
+							})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-[10px] tracking-widest text-[#9a958c] uppercase",
+								children: "Default −40 dB · not sent to the switcher"
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mt-4 grid gap-3 lg:grid-cols-3",
+							children: [
+								[
+									"Camera 1 close-up",
+									"HDMI 1 talking",
+									meters[0],
+									thresholds[0],
+									0
+								],
+								[
+									"Camera 2 close-up",
+									"HDMI 2 talking",
+									meters[1],
+									thresholds[1],
+									1
+								],
+								[
+									"Wide · both people",
+									"HDMI 3 talking",
+									meters[2],
+									thresholds[2],
+									2
+								]
+							].map(([role, entity, db, threshold, index]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TalkCard, {
+								role,
+								entity,
+								db,
+								threshold,
+								onThreshold: (value) => setThresholds((prev) => prev.map((item, i) => i === index ? value : item))
+							}, entity))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mt-3 grid gap-3 sm:grid-cols-2",
+							children: mics.map((db, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TalkCard, {
+								role: `Mic ${index + 1}`,
+								entity: `Mic ${index + 1} talking`,
+								db,
+								threshold: micThresholds[index],
+								onThreshold: (value) => setMicThresholds((prev) => prev.map((item, i) => i === index ? value : item))
+							}, `mic-${index}`))
+						})
+					]
+				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
 					className: "grid gap-4 md:grid-cols-2",
 					children: GROUPS.map((group) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -448,7 +520,7 @@ function Home() {
 									className: "text-[#eceae4]",
 									children: "SFLN"
 								}),
-								" subscribe. Meters are throttled to 1–4 Hz. Input names, keyer counts, and audio strips are whatever the switcher reports, so original mic ids (1301/1302) and G2 XLR ids (1001/1002) both label themselves."
+								" subscribe. Meters are throttled to 1–4 Hz. Each strip also gets a talking binary sensor and a talking-threshold number. The threshold stays in Home Assistant."
 							]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -479,6 +551,65 @@ function Action({ children, onClick, active }) {
 		onClick,
 		className: `border px-4 py-2 text-sm font-medium ${active ? "border-[#eceae4] bg-[#eceae4] text-[#101114]" : "border-[#3a3e46] bg-[#14161b]"}`,
 		children
+	});
+}
+function roundHalf(value) {
+	return Math.max(-100, Math.min(6, Math.round(value * 2) / 2));
+}
+function TalkCard({ role, entity, db, threshold, onThreshold }) {
+	const talking = db >= threshold;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: `border px-3 py-3 ${talking ? "border-[#ff4d43] bg-[#2a1514]" : "border-[#2c3038] bg-[#14161b]"}`,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex items-start justify-between gap-3",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "text-[10px] tracking-[0.18em] text-[#9a958c] uppercase",
+				children: role
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "mt-1 text-sm font-medium",
+				children: entity
+			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: `border px-2 py-1 text-[10px] tracking-widest uppercase ${talking ? "border-[#ff4d43] text-[#ff4d43]" : "border-[#2c3038] text-[#9a958c]"}`,
+				children: talking ? "On" : "Off"
+			})]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-3 flex items-end justify-between gap-3 text-xs",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-col gap-1 text-[#9a958c]",
+				children: ["Threshold", /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center gap-1",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-label": `Lower ${entity} threshold`,
+							onClick: () => onThreshold(roundHalf(threshold - .5)),
+							className: "border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]",
+							children: "−"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "min-w-16 text-center text-sm tabular-nums text-[#eceae4]",
+							children: threshold.toFixed(1)
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-label": `Raise ${entity} threshold`,
+							onClick: () => onThreshold(roundHalf(threshold + .5)),
+							className: "border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]",
+							children: "+"
+						})
+					]
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "text-right",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "text-[10px] tracking-widest text-[#9a958c] uppercase",
+					children: "Level"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "text-lg tabular-nums text-[#eceae4]",
+					children: [db.toFixed(1), " dB"]
+				})]
+			})]
+		})]
 	});
 }
 function Meter({ label, db, hot }) {

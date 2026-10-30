@@ -89,11 +89,17 @@ Meters are post-fader, the louder of left and right, in dB. The switcher's words
 | Entity | Platform | Access | Notes |
 | --- | --- | --- | --- |
 | {strip} level | sensor | read-only | `FMLv`, sampled at the configured rate. |
+| {strip} talking | binary sensor | read-only | On when `{strip} level` is at or above `{strip} talking threshold`. Device class is sound, so the dashboard may say Detected. The state automations see is `on` / `off`. Attributes: `level_db`, `threshold_db`. |
+| {strip} talking threshold | number | config | −100 dB to +6 dB, step 0.5, default **−40 dB**. Stored in Home Assistant and restored on restart. It is not sent to the switcher. One per strip, including HDMI inputs and mics. |
 | {strip} mix | select | control | Off, On, Audio follow video (`CFSP`). |
 | {strip} fader | number | control | −100 dB to +10 dB (`CFSP`). Attributes include input gain, balance, EQ enable, delay. Those are not separate controls. |
 | Master level | sensor | read-only | `FDLv`. |
 | Master fader | number | control | `CFMP`. |
 | Master follows fade to black | switch | control | `CFMP`. |
+
+The talking sensor uses the same name as the level sensor. If the switcher calls HDMI 1 "Camera 1", the entities are `sensor.…_camera_1_level`, `binary_sensor.…_camera_1_talking`, and `number.…_camera_1_talking_threshold`. Set the threshold a few dB above the noise floor you see on the level sensor while that person is quiet. The sensor follows the meter rate (default 2 Hz) and turns off the moment the level drops below the threshold, so a camera-switch automation should use a short `for:` (a third of a second is a reasonable start) instead of cutting on every sample.
+
+There is no talking sensor on the master. A wide shot does not get a special sensor either: if that camera has its own strip, it gets the same pair as the close-ups. If the people are on the XLR mics rather than HDMI audio, use the Mic (or XLR) talking sensors, not the HDMI ones.
 
 ### Record and stream
 

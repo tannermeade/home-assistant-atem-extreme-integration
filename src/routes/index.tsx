@@ -38,6 +38,8 @@ const GROUPS: { title: string; rows: [string, string, string][] }[] = [
     title: "Fairlight audio",
     rows: [
       ["HDMI 1–8 level", "sensor", "Read-only"],
+      ["HDMI / mic talking", "binary sensor", "Read-only"],
+      ["Talking threshold", "number", "Config"],
       ["Mic 1 and Mic 2 level", "sensor", "Read-only"],
       ["Master level", "sensor", "Read-only"],
       ["Strip mix Off / On / AFV", "select", "Control"],
@@ -71,6 +73,8 @@ function Home() {
   const [meters, setMeters] = useState<number[]>(() => INPUTS.map(() => -28));
   const [mics, setMics] = useState([-18, -22]);
   const [master, setMaster] = useState(-14);
+  const [thresholds, setThresholds] = useState<number[]>(() => INPUTS.map(() => -40));
+  const [micThresholds, setMicThresholds] = useState([-40, -40]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -196,6 +200,54 @@ function Home() {
           </div>
         </section>
 
+        <section className="panel p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-sm font-medium tracking-wide">Talking sensors</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#b7b2a8]">
+                Each strip gets a boolean and a threshold. Talking turns on when that strip's level is at or above
+                the number. These three are the close-ups and the wide shot. Mics get the same pair if the voices are on
+                the XLRs instead of the HDMI audio.
+              </p>
+            </div>
+            <p className="text-[10px] tracking-widest text-[#9a958c] uppercase">Default −40 dB · not sent to the switcher</p>
+          </div>
+          <div className="mt-4 grid gap-3 lg:grid-cols-3">
+            {(
+              [
+                ["Camera 1 close-up", "HDMI 1 talking", meters[0], thresholds[0], 0],
+                ["Camera 2 close-up", "HDMI 2 talking", meters[1], thresholds[1], 1],
+                ["Wide · both people", "HDMI 3 talking", meters[2], thresholds[2], 2],
+              ] as const
+            ).map(([role, entity, db, threshold, index]) => (
+              <TalkCard
+                key={entity}
+                role={role}
+                entity={entity}
+                db={db}
+                threshold={threshold}
+                onThreshold={(value) =>
+                  setThresholds((prev) => prev.map((item, i) => (i === index ? value : item)))
+                }
+              />
+            ))}
+          </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {mics.map((db, index) => (
+              <TalkCard
+                key={`mic-${index}`}
+                role={`Mic ${index + 1}`}
+                entity={`Mic ${index + 1} talking`}
+                db={db}
+                threshold={micThresholds[index]}
+                onThreshold={(value) =>
+                  setMicThresholds((prev) => prev.map((item, i) => (i === index ? value : item)))
+                }
+              />
+            ))}
+          </div>
+        </section>
+
         <section className="grid gap-4 md:grid-cols-2">
           {GROUPS.map((group) => (
             <div key={group.title} className="panel p-4">
@@ -221,9 +273,8 @@ function Home() {
             A HACS custom component, <span className="text-[#eceae4]">atem_extreme</span>, speaks the ATEM UDP protocol
             directly. PyATEMMax was not used: the released library only has the classic audio mixer, and the Extreme ISO
             meters Fairlight levels on <span className="text-[#eceae4]">FMLv</span> and <span className="text-[#eceae4]">FDLv</span> after
-            an <span className="text-[#eceae4]">SFLN</span> subscribe. Meters are throttled to 1–4 Hz. Input names, keyer counts, and
-            audio strips are whatever the switcher reports, so original mic ids (1301/1302) and G2 XLR ids (1001/1002)
-            both label themselves.
+            an <span className="text-[#eceae4]">SFLN</span> subscribe. Meters are throttled to 1–4 Hz. Each strip also gets a
+            talking binary sensor and a talking-threshold number. The threshold stays in Home Assistant.
           </p>
           <p className="mt-2">
             No physical switcher was connected. Handshake, meter scaling, and the entity list are unit-tested against a
@@ -254,6 +305,71 @@ function Action({ children, onClick, active }: { children: string; onClick: () =
     >
       {children}
     </button>
+  );
+}
+
+function roundHalf(value: number) {
+  return Math.max(-100, Math.min(6, Math.round(value * 2) / 2));
+}
+
+function TalkCard({
+  role,
+  entity,
+  db,
+  threshold,
+  onThreshold,
+}: {
+  role: string;
+  entity: string;
+  db: number;
+  threshold: number;
+  onThreshold: (value: number) => void;
+}) {
+  const talking = db >= threshold;
+  return (
+    <div className={`border px-3 py-3 ${talking ? "border-[#ff4d43] bg-[#2a1514]" : "border-[#2c3038] bg-[#14161b]"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] tracking-[0.18em] text-[#9a958c] uppercase">{role}</div>
+          <div className="mt-1 text-sm font-medium">{entity}</div>
+        </div>
+        <span
+          className={`border px-2 py-1 text-[10px] tracking-widest uppercase ${
+            talking ? "border-[#ff4d43] text-[#ff4d43]" : "border-[#2c3038] text-[#9a958c]"
+          }`}
+        >
+          {talking ? "On" : "Off"}
+        </span>
+      </div>
+      <div className="mt-3 flex items-end justify-between gap-3 text-xs">
+        <div className="flex flex-col gap-1 text-[#9a958c]">
+          Threshold
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label={`Lower ${entity} threshold`}
+              onClick={() => onThreshold(roundHalf(threshold - 0.5))}
+              className="border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]"
+            >
+              −
+            </button>
+            <span className="min-w-16 text-center text-sm tabular-nums text-[#eceae4]">{threshold.toFixed(1)}</span>
+            <button
+              type="button"
+              aria-label={`Raise ${entity} threshold`}
+              onClick={() => onThreshold(roundHalf(threshold + 0.5))}
+              className="border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] tracking-widest text-[#9a958c] uppercase">Level</div>
+          <div className="text-lg tabular-nums text-[#eceae4]">{db.toFixed(1)} dB</div>
+        </div>
+      </div>
+    </div>
   );
 }
 

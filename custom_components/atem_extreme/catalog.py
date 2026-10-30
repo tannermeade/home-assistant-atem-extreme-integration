@@ -407,6 +407,35 @@ def _audio(state: AtemState) -> list[EntitySpec]:
                     description="Classic audio mixer meter (best effort, not used by Extreme ISO).",
                 )
             )
+            specs.append(
+                EntitySpec(
+                    "number",
+                    f"classic_talk_threshold_{source_id}",
+                    f"{label} talking threshold",
+                    "talk_threshold",
+                    (source_id,),
+                    False,
+                    "mdi:microphone-settings",
+                    entity_category="config",
+                    unit="dB",
+                    min_value=-100,
+                    max_value=6,
+                    step=0.5,
+                    description="Decibel level at or above which this input counts as someone talking.",
+                )
+            )
+            specs.append(
+                EntitySpec(
+                    "binary_sensor",
+                    f"classic_talking_{source_id}",
+                    f"{label} talking",
+                    "classic_talking",
+                    (source_id,),
+                    True,
+                    "mdi:account-voice",
+                    description="On while this classic-mixer input is at or above its talking threshold.",
+                )
+            )
         specs.append(
             EntitySpec(
                 "sensor",
@@ -460,6 +489,38 @@ def _fairlight_strip(source: FairlightSource, label: str) -> list[EntitySpec]:
             max_value=10,
             step=0.5,
             description="Fairlight channel fader.",
+        ),
+        EntitySpec(
+            "number",
+            f"talk_threshold_{index}_{source_id}",
+            f"{label} talking threshold",
+            "talk_threshold",
+            (index, source_id),
+            False,
+            "mdi:microphone-settings",
+            entity_category="config",
+            unit="dB",
+            min_value=-100,
+            max_value=6,
+            step=0.5,
+            description=(
+                "Decibel level at or above which this strip counts as someone talking. "
+                "Compared with the level sensor (louder of left and right). "
+                "Stored in Home Assistant, not sent to the switcher. Default -40 dB."
+            ),
+        ),
+        EntitySpec(
+            "binary_sensor",
+            f"talking_{index}_{source_id}",
+            f"{label} talking",
+            "talking",
+            (index, source_id),
+            True,
+            "mdi:account-voice",
+            description=(
+                "On while this strip's level is at or above its talking threshold. "
+                "State is on or off. Attributes level_db and threshold_db show the comparison."
+            ),
         ),
     ]
 

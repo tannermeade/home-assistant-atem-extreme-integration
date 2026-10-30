@@ -191,6 +191,15 @@ def _loud(levels: Levels | None) -> float | None:
     return round(max(levels.left, levels.right), 1)
 
 
+def strip_level(state: AtemState, spec: EntitySpec) -> float | None:
+    """Louder channel for a talking sensor, in dB."""
+    if spec.kind == "classic_talking":
+        return _loud(state.levels.get((spec.address[0], 0)))
+    if len(spec.address) < 2:
+        return None
+    return _loud(state.levels.get((spec.address[0], spec.address[1])))
+
+
 def _level_attrs(levels: Levels | None) -> dict:
     if levels is None:
         return {}

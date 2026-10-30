@@ -20,10 +20,11 @@ from custom_components.atem_extreme.atem.protocol import (
     hello_packet,
     parse_packet,
 )
-from custom_components.atem_extreme.atem.state import AtemState
+from custom_components.atem_extreme.atem.state import AtemState, Levels
 from custom_components.atem_extreme.catalog import build_specs
 from custom_components.atem_extreme.const import FAIRLIGHT_SOURCE_STEREO
-from custom_components.atem_extreme.values import async_write, read_value
+from custom_components.atem_extreme.talk import clamp_talk_threshold, is_talking
+from custom_components.atem_extreme.values import async_write, read_value, strip_level
 
 
 def _inpr(source: int, name: str, port: int = 0, me: int = 1) -> bytes:
@@ -201,6 +202,38 @@ class CatalogTests(unittest.TestCase):
         specs = {spec.key: spec for spec in build_specs(state)}
         mic = specs[f"level_1301_{FAIRLIGHT_SOURCE_STEREO}"]
         self.assertIn("Mic 1", mic.name)
+
+    def test_talking_follows_the_louder_channel_and_the_threshold(self) -> None:
+        self.assertFalse(is_talking(None, -40))
+        self.assertFalse(is_talking(-40.1, -40))
+        self.assertTrue(is_talking(-40, -40))
+        self.assertTrue(is_talking(-12.3, -40))
+        self.assertEqual(clamp_talk_threshold(-12.24), -12.0)
+        self.assertEqual(clamp_talk_threshold(50), 6.0)
+        self.assertEqual(clamp_talk_threshold(-500), -100.0)
+
+        state = self._extreme()
+        specs = {spec.key: spec for spec in build_specs(state)}
+        for index in range(1, 9):
+            talk = specs[f"talking_{index}_{FAIRLIGHT_SOURCE_STEREO}"]
+            threshold = specs[f"talk_threshold_{index}_{FAIRLIGHT_SOURCE_STEREO}"]
+            self.assertEqual(talk.platform, "binary_sensor")
+            self.assertTrue(talk.read_only)
+            self.assertEqual(talk.name, f"HDMI {index} talking")
+            self.assertEqual(threshold.platform, "number")
+            self.assertFalse(threshold.read_only)
+            self.assertEqual(threshold.unit, "dB")
+            self.assertEqual(threshold.entity_category, "config")
+            self.assertEqual(threshold.address, (index, FAIRLIGHT_SOURCE_STEREO))
+        mic_talk = specs[f"talking_1301_{FAIRLIGHT_SOURCE_STEREO}"]
+        self.assertEqual(mic_talk.name, "Mic 1 talking")
+        self.assertNotIn("talking_master", specs)
+
+        state.levels[(1, FAIRLIGHT_SOURCE_STEREO)] = Levels(left=-48.0, right=-22.5)
+        level_spec = specs[f"talking_1_{FAIRLIGHT_SOURCE_STEREO}"]
+        self.assertEqual(strip_level(state, level_spec), -22.5)
+        self.assertTrue(is_talking(strip_level(state, level_spec), -30))
+        self.assertFalse(is_talking(strip_level(state, level_spec), -20))
 
 
 class HandshakeTests(unittest.IsolatedAsyncioTestCase):

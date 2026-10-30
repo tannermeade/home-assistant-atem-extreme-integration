@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .atem.client import AtemClient
 from .atem.state import AtemState
 from .const import CONF_HOST, CONF_METER_HZ, CONF_PORT, DEFAULT_METER_HZ, DOMAIN
+from .talk import DEFAULT_TALK_THRESHOLD_DB, clamp_talk_threshold
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +40,17 @@ class AtemCoordinator(DataUpdateCoordinator[AtemState]):
             on_connection=self._on_connection,
         )
         self._meter_unsub = None
+        # Local only. Keyed by the strip address the level sensor uses.
+        self.talk_thresholds: dict[tuple, float] = {}
+
+    def talk_threshold(self, address: tuple) -> float:
+        return self.talk_thresholds.get(address, DEFAULT_TALK_THRESHOLD_DB)
+
+    def set_talk_threshold(self, address: tuple, value: float) -> None:
+        self.talk_thresholds[address] = clamp_talk_threshold(value)
+        # Talking sensors listen to the meter coordinator, so a threshold
+        # change updates them even when the switcher has not sent a new sample.
+        self.meters.async_set_updated_data(self.hass.loop.time())
 
     async def async_start(self) -> None:
         await self.client.start()
