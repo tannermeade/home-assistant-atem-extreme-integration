@@ -1,0 +1,130 @@
+[
+  {
+    "name": "__tests__",
+    "path": "src/__tests__",
+    "sha": "ba28565a6e6d6aae2d248b92314ed1582bf61bcc",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/__tests__?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/__tests__",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/ba28565a6e6d6aae2d248b92314ed1582bf61bcc",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/__tests__?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/ba28565a6e6d6aae2d248b92314ed1582bf61bcc",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/__tests__"
+    }
+  },
+  {
+    "name": "atem.ts",
+    "path": "src/atem.ts",
+    "sha": "0a794175e050a48e4cf88715f0e78fe6999cd173",
+    "size": 20144,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/atem.ts?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/blob/main/src/atem.ts",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/blobs/0a794175e050a48e4cf88715f0e78fe6999cd173",
+    "download_url": "https://raw.githubusercontent.com/Sofie-Automation/sofie-atem-connection/main/src/atem.ts",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/atem.ts?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/blobs/0a794175e050a48e4cf88715f0e78fe6999cd173",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/blob/main/src/atem.ts"
+    }
+  },
+  {
+    "name": "commands",
+    "path": "src/commands",
+    "sha": "6ee8cc7955127dac43c34f8575d2b65586aa6e18",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/commands?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/commands",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/6ee8cc7955127dac43c34f8575d2b65586aa6e18",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/commands?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/6ee8cc7955127dac43c34f8575d2b65586aa6e18",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/commands"
+    }
+  },
+  {
+    "name": "dataTransfer",
+    "path": "src/dataTransfer",
+    "sha": "402433612708e2f9cd96872341533e2ea98d0866",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/dataTransfer?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/dataTransfer",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/402433612708e2f9cd96872341533e2ea98d0866",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/dataTransfer?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/402433612708e2f9cd96872341533e2ea98d0866",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/dataTransfer"
+    }
+  },
+  {
+    "name": "enums",
+    "path": "src/enums",
+    "sha": "3315b09795ed261dab7879a9bd0df5b2714aa78d",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/enums?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/enums",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/3315b09795ed261dab7879a9bd0df5b2714aa78d",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/enums?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/3315b09795ed261dab7879a9bd0df5b2714aa78d",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/enums"
+    }
+  },
+  {
+    "name": "index.ts",
+    "path": "src/index.ts",
+    "sha": "7b033f2f046b757decbe59e9cbec8145654ac42b",
+    "size": 865,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/index.ts?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/blob/main/src/index.ts",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/blobs/7b033f2f046b757decbe59e9cbec8145654ac42b",
+    "download_url": "https://raw.githubusercontent.com/Sofie-Automation/sofie-atem-connection/main/src/index.ts",
+    "type": "file",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/index.ts?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/blobs/7b033f2f046b757decbe59e9cbec8145654ac42b",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/blob/main/src/index.ts"
+    }
+  },
+  {
+    "name": "lib",
+    "path": "src/lib",
+    "sha": "55926f04ec5cd79f8f8102f38436619d46eb560c",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/lib?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/lib",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/55926f04ec5cd79f8f8102f38436619d46eb560c",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/lib?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/55926f04ec5cd79f8f8102f38436619d46eb560c",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/lib"
+    }
+  },
+  {
+    "name": "state",
+    "path": "src/state",
+    "sha": "530e481ba5143715a06f4bee20fff23433b32122",
+    "size": 0,
+    "url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/state?ref=main",
+    "html_url": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/state",
+    "git_url": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/530e481ba5143715a06f4bee20fff23433b32122",
+    "download_url": null,
+    "type": "dir",
+    "_links": {
+      "self": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/contents/src/state?ref=main",
+      "git": "https://api.github.com/repos/Sofie-Automation/sofie-atem-connection/git/trees/530e481ba5143715a06f4bee20fff23433b32122",
+      "html": "https://github.com/Sofie-Automation/sofie-atem-connection/tree/main/src/state"
+    }
+  }
+]

@@ -12,6 +12,15 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .atem.client import AtemClient
 from .atem.state import AtemState
 from .const import CONF_HOST, CONF_METER_HZ, CONF_PORT, DEFAULT_METER_HZ, DOMAIN
+from .supersource import (
+    SuperSourceAdjustments,
+    build_preset,
+    clamp_corner_margin,
+    clamp_corner_size,
+    clamp_zoom_column,
+    default_roles,
+    matching_preset,
+)
 from .talk import DEFAULT_TALK_THRESHOLD_DB, clamp_talk_threshold
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +51,7 @@ class AtemCoordinator(DataUpdateCoordinator[AtemState]):
         self._meter_unsub = None
         # Local only. Keyed by the strip address the level sensor uses.
         self.talk_thresholds: dict[tuple, float] = {}
+        self.ss = SuperSourceAdjustments()
 
     def talk_threshold(self, address: tuple) -> float:
         return self.talk_thresholds.get(address, DEFAULT_TALK_THRESHOLD_DB)
@@ -51,6 +61,74 @@ class AtemCoordinator(DataUpdateCoordinator[AtemState]):
         # Talking sensors listen to the meter coordinator, so a threshold
         # change updates them even when the switcher has not sent a new sample.
         self.meters.async_set_updated_data(self.hass.loop.time())
+
+    def resolved_roles(self) -> dict[str, int]:
+        defaults = default_roles(self.client.state)
+        resolved: dict[str, int] = {}
+        known = self.client.state.inputs
+        for role, fallback in defaults.items():
+            chosen = self.ss.roles.get(role)
+            if chosen is None or (chosen not in known and chosen != 0):
+                resolved[role] = fallback
+            else:
+                resolved[role] = chosen
+        return resolved
+
+    def set_supersource_role(self, role: str, source: int) -> None:
+        self.ss.roles[role] = source
+        self._refresh_local()
+
+    def set_supersource_corner(self, corner: str) -> None:
+        self.ss.corner = corner
+        self._refresh_local()
+
+    def set_supersource_number(self, field: str, value: float) -> None:
+        if field == "corner_size":
+            self.ss.corner_size = clamp_corner_size(value)
+        elif field == "corner_margin":
+            self.ss.corner_margin = clamp_corner_margin(value)
+        elif field == "zoom_column":
+            self.ss.zoom_column = clamp_zoom_column(value)
+        else:
+            raise ValueError(f"Unknown SuperSource setting {field}")
+        self._refresh_local()
+
+    def remember_supersource_layout(self, name: str) -> None:
+        """Restore the last choice without sending it to the switcher."""
+        self.ss.layout = name
+        self._refresh_local()
+
+    async def async_apply_supersource(self, layout: str | None = None) -> None:
+        name = layout if layout is not None else self.ss.layout
+        if not name:
+            raise ValueError("Select a SuperSource layout first")
+        built = build_preset(name, self.resolved_roles(), self.ss)
+        await self.client.apply_supersource(built.background, built.boxes)
+        self.ss.layout = name
+        _LOGGER.info("Applied SuperSource layout %s on %s", name, self.client.host)
+        self._refresh_local()
+
+    def supersource_attributes(self) -> dict:
+        roles = self.resolved_roles()
+        state = self.client.state
+        on_switcher = matching_preset(state, roles, self.ss)
+        return {
+            "on_switcher": on_switcher or ("custom" if state.supersource_boxes else "unknown"),
+            "matches_switcher": on_switcher is not None and on_switcher == self.ss.layout,
+            "changes_program": False,
+            "screen": state.input_label(roles["screen"]),
+            "person_1": state.input_label(roles["person1"]),
+            "person_2": state.input_label(roles["person2"]),
+            "wide": state.input_label(roles["wide"]),
+            "corner": self.ss.corner,
+            "corner_size": self.ss.corner_size,
+            "corner_margin": self.ss.corner_margin,
+            "zoom_column": self.ss.zoom_column,
+            "untested_on_hardware": True,
+        }
+
+    def _refresh_local(self) -> None:
+        self.async_set_updated_data(self.client.snapshot())
 
     async def async_start(self) -> None:
         await self.client.start()

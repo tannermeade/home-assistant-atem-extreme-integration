@@ -236,6 +236,218 @@ class CatalogTests(unittest.TestCase):
         self.assertFalse(is_talking(strip_level(state, level_spec), -20))
 
 
+class SuperSourceTests(unittest.TestCase):
+    def _roles(self) -> dict[str, int]:
+        return {"screen": 4, "person1": 1, "person2": 2, "wide": 3}
+
+    def _adjust(self, **kwargs):
+        from custom_components.atem_extreme.supersource import SuperSourceAdjustments
+
+        return SuperSourceAdjustments(**kwargs)
+
+    def test_screen_left_tiles_the_frame(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset, visible_edges
+
+        built = build_preset("Screen left, cameras right", self._roles(), self._adjust())
+        screen, top, bottom, spare = built.boxes
+        self.assertEqual(built.background, 0)
+        self.assertFalse(spare.enabled)
+        self.assertEqual(screen.source, 4)
+        self.assertEqual(top.source, 1)
+        self.assertEqual(bottom.source, 2)
+        self.assertFalse(screen.cropped)
+        left, right, low, high = visible_edges(screen)
+        cam_left, cam_right, cam_low, cam_high = visible_edges(top)
+        bot_left, _bot_right, bot_low, bot_high = visible_edges(bottom)
+        self.assertAlmostEqual(left, -16, delta=0.02)
+        self.assertAlmostEqual(right, cam_left, delta=0.02)
+        self.assertAlmostEqual(cam_right, 16, delta=0.02)
+        self.assertAlmostEqual(high, cam_high, delta=0.02)
+        self.assertAlmostEqual(cam_low, bot_high, delta=0.02)
+        self.assertAlmostEqual(low, bot_low, delta=0.02)
+        self.assertAlmostEqual(bot_left, cam_left, delta=0.02)
+        self.assertLess(high, 9)
+        self.assertGreater(top.y, 0)
+        self.assertLess(bottom.y, 0)
+
+    def test_zoom_crops_faces_and_keeps_the_screen_whole(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset, visible_edges
+
+        built = build_preset(
+            "Screen left, cameras right, zoomed",
+            self._roles(),
+            self._adjust(zoom_column=0.25),
+        )
+        screen, top, bottom, _spare = built.boxes
+        self.assertFalse(screen.cropped)
+        self.assertAlmostEqual(screen.size, 0.75, places=2)
+        self.assertGreater(top.crop_left, 0)
+        self.assertAlmostEqual(top.crop_left, top.crop_right, places=3)
+        self.assertEqual(top.crop_top, 0)
+        _left, right, _low, high = visible_edges(screen)
+        cam_left, cam_right, cam_low, cam_high = visible_edges(top)
+        _b_left, _b_right, bot_low, bot_high = visible_edges(bottom)
+        self.assertAlmostEqual(right, cam_left, delta=0.02)
+        self.assertAlmostEqual(cam_right, 16, delta=0.02)
+        self.assertAlmostEqual(high, cam_high, delta=0.02)
+        self.assertAlmostEqual(cam_low, bot_high, delta=0.02)
+        self.assertAlmostEqual(visible_edges(screen)[2], bot_low, delta=0.02)
+
+    def test_sides_and_swap_only_move_the_named_sources(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset
+
+        roles = self._roles()
+        plain = build_preset("Screen left, cameras right", roles, self._adjust())
+        mirrored = build_preset("Screen right, cameras left", roles, self._adjust())
+        swapped = build_preset("Screen left, cameras right, swapped", roles, self._adjust())
+        self.assertLess(plain.boxes[0].x, 0)
+        self.assertGreater(mirrored.boxes[0].x, 0)
+        self.assertLess(mirrored.boxes[1].x, 0)
+        self.assertEqual(swapped.boxes[1].source, 2)
+        self.assertEqual(swapped.boxes[2].source, 1)
+        self.assertEqual(plain.boxes[0].source, mirrored.boxes[0].source)
+
+    def test_corner_sits_inside_the_chosen_corner(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset, visible_edges
+
+        built = build_preset(
+            "Corner wide",
+            self._roles(),
+            self._adjust(corner="Bottom right", corner_size=0.30, corner_margin=0.8),
+        )
+        box = built.boxes[0]
+        self.assertEqual(built.background, 4)
+        self.assertEqual(box.source, 3)
+        self.assertTrue(box.enabled)
+        self.assertFalse(any(item.enabled for item in built.boxes[1:]))
+        left, right, low, high = visible_edges(box)
+        self.assertGreater(box.x, 0)
+        self.assertLess(box.y, 0)
+        self.assertAlmostEqual(right, 16 - 0.8, delta=0.02)
+        self.assertAlmostEqual(low, -9 + 0.8, delta=0.02)
+        self.assertLess(left, right)
+        self.assertLess(low, high)
+        top_left = build_preset(
+            "Corner person 1",
+            self._roles(),
+            self._adjust(corner="Top left", corner_size=0.30, corner_margin=0.8),
+        ).boxes[0]
+        self.assertEqual(top_left.source, 1)
+        self.assertLess(top_left.x, 0)
+        self.assertGreater(top_left.y, 0)
+
+    def test_nudge_waits_until_the_next_push(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset
+
+        small = build_preset("Corner person 2", self._roles(), self._adjust(corner_size=0.20))
+        large = build_preset("Corner person 2", self._roles(), self._adjust(corner_size=0.40))
+        self.assertEqual(small.boxes[0].source, 2)
+        self.assertLess(small.boxes[0].size, large.boxes[0].size)
+
+    def test_write_commands_use_the_firmware_8_layout(self) -> None:
+        from custom_components.atem_extreme.supersource import build_preset, csbp_payload, cssc_payload
+
+        built = build_preset("Screen left, cameras right", self._roles(), self._adjust())
+        payload = csbp_payload(0, built.boxes[0])
+        self.assertEqual(len(payload), 24)
+        self.assertEqual(payload[0:2], bytes((0x03, 0xFF)))
+        self.assertEqual(payload[2], 0)
+        self.assertEqual(payload[3], 0)
+        self.assertEqual(payload[4], 1)
+        self.assertEqual(int.from_bytes(payload[6:8], "big"), 4)
+        self.assertEqual(int.from_bytes(payload[8:10], "big", signed=True), -533)
+        self.assertEqual(int.from_bytes(payload[10:12], "big", signed=True), 0)
+        self.assertEqual(int.from_bytes(payload[12:14], "big"), 667)
+        self.assertEqual(payload[14], 0)
+        art = cssc_payload(built.background)
+        self.assertEqual(art[0], 0x05)
+        self.assertEqual(art[1], 0)
+        self.assertEqual(int.from_bytes(art[2:4], "big"), 0)
+        self.assertEqual(art[6], 0)
+        corner = build_preset("Corner wide", self._roles(), self._adjust())
+        self.assertEqual(int.from_bytes(cssc_payload(corner.background)[2:4], "big"), 4)
+
+    def test_v8_state_matches_the_layout_that_would_be_pushed(self) -> None:
+        from custom_components.atem_extreme.atem.protocol import AtemCommand
+        from custom_components.atem_extreme.supersource import (
+            SuperSourceAdjustments,
+            build_preset,
+            layout_matches,
+            matching_preset,
+        )
+
+        adjustments = SuperSourceAdjustments()
+        roles = self._roles()
+        built = build_preset("Screen left, cameras right", roles, adjustments)
+        state = AtemState()
+        for index, box in enumerate(built.boxes):
+            state.apply(AtemCommand("SSBP", _ssbp_echo(index, box)))
+        state.apply(AtemCommand("SSrc", _ssrc_echo(built.background)))
+        self.assertEqual(state.supersource_boxes[1]["source"], 1)
+        self.assertAlmostEqual(state.supersource_boxes[0]["x"], built.boxes[0].x, delta=0.02)
+        self.assertTrue(layout_matches(state, built))
+        self.assertEqual(matching_preset(state, roles, adjustments), "Screen left, cameras right")
+        self.assertFalse(layout_matches(state, build_preset("Corner wide", roles, adjustments)))
+
+    def test_box_index_is_not_the_supersource_id(self) -> None:
+        from custom_components.atem_extreme.atem.protocol import AtemCommand
+
+        state = AtemState()
+        payload = bytearray(24)
+        payload[0] = 0
+        payload[1] = 2
+        payload[2] = 1
+        struct.pack_into(">H", payload, 4, 7)
+        state.apply(AtemCommand("SSBP", bytes(payload)))
+        self.assertNotIn(0, state.supersource_boxes)
+        self.assertEqual(state.supersource_boxes[2]["source"], 7)
+
+    def test_catalog_exposes_every_preset_and_the_nudges(self) -> None:
+        from custom_components.atem_extreme.supersource import preset_names
+
+        specs = {spec.key: spec for spec in build_specs(self._extreme_state())}
+        keys = [spec.key for spec in build_specs(self._extreme_state())]
+        self.assertEqual(len(keys), len(set(keys)))
+        self.assertFalse(specs["ss_layout"].read_only)
+        self.assertFalse(specs["ss_apply"].read_only)
+        self.assertEqual(specs["ss_corner_size"].entity_category, "config")
+        self.assertEqual(specs["ss_role_screen"].address, ("screen",))
+        self.assertEqual(len(preset_names()), 12)
+        self.assertIn("Corner wide", preset_names())
+        self.assertIn("Screen left, cameras right, zoomed, swapped", preset_names())
+        self.assertIn("Boxes off", preset_names())
+        self.assertTrue(specs["supersource"].read_only)
+
+    def _extreme_state(self) -> AtemState:
+        state = AtemState()
+        state.product_name = "ATEM Mini Extreme ISO"
+        return state
+
+
+def _ssbp_echo(index: int, box) -> bytes:
+    from custom_components.atem_extreme.supersource import _wire
+
+    buf = bytearray(24)
+    buf[1] = index
+    buf[2] = 1 if box.enabled else 0
+    struct.pack_into(">H", buf, 4, box.source & 0xFFFF)
+    struct.pack_into(">h", buf, 6, _wire(box.x, 100, signed=True))
+    struct.pack_into(">h", buf, 8, _wire(box.y, 100, signed=True))
+    struct.pack_into(">H", buf, 10, _wire(box.size, 1000, signed=False))
+    buf[12] = 1 if box.cropped else 0
+    struct.pack_into(">H", buf, 14, _wire(box.crop_top, 1000, signed=False))
+    struct.pack_into(">H", buf, 16, _wire(box.crop_bottom, 1000, signed=False))
+    struct.pack_into(">H", buf, 18, _wire(box.crop_left, 1000, signed=False))
+    struct.pack_into(">H", buf, 20, _wire(box.crop_right, 1000, signed=False))
+    return bytes(buf)
+
+
+def _ssrc_echo(fill: int) -> bytes:
+    buf = bytearray(16)
+    struct.pack_into(">H", buf, 2, fill & 0xFFFF)
+    return bytes(buf)
+
+
 class HandshakeTests(unittest.IsolatedAsyncioTestCase):
     async def test_client_handshakes_enables_fairlight_meters_and_cuts(self) -> None:
         loop = asyncio.get_running_loop()

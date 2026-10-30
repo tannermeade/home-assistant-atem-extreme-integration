@@ -16,6 +16,15 @@ from .const import (
     PORT_EXTERNAL,
     TRANSITION_STYLES,
 )
+from .supersource import (
+    CORNER_MARGIN_RANGE,
+    CORNER_SIZE_RANGE,
+    CORNERS,
+    DEFAULT_CORNER_MARGIN,
+    DEFAULT_CORNER_SIZE,
+    DEFAULT_ZOOM_COLUMN,
+    ZOOM_COLUMN_RANGE,
+)
 
 
 @dataclass(frozen=True)
@@ -45,6 +54,7 @@ def build_specs(state: AtemState, me: int = DEFAULT_ME) -> list[EntitySpec]:
     specs.extend(_record_stream(state))
     specs.extend(_tally(state))
     specs.extend(_extras(state))
+    specs.extend(_supersource_controls(state))
     return specs
 
 
@@ -689,7 +699,7 @@ def _extras(state: AtemState) -> list[EntitySpec]:
                 description="Multiview layout. Window sources are attributes. Read-only.",
             )
         )
-    if state.supersource_boxes or state.topology.get("supersources"):
+    if _has_supersource(state):
         specs.append(
             EntitySpec(
                 "sensor",
@@ -700,10 +710,155 @@ def _extras(state: AtemState) -> list[EntitySpec]:
                 True,
                 "mdi:picture-in-picture-bottom-right",
                 entity_category="diagnostic",
-                description="SuperSource box enable and source. Geometry is best-effort and read-only.",
+                description="SuperSource box enable, source, and geometry. Read-only. The layout select is what writes a new look.",
             )
         )
     return specs
+
+
+def _has_supersource(state: AtemState) -> bool:
+    if state.topology.get("supersources") or state.supersource_boxes or state.supersource_art is not None:
+        return True
+    return "Extreme" in (state.product_name or "")
+
+
+def _supersource_controls(state: AtemState) -> list[EntitySpec]:
+    if not _has_supersource(state):
+        return []
+    size_min, size_max, size_step = CORNER_SIZE_RANGE
+    margin_min, margin_max, margin_step = CORNER_MARGIN_RANGE
+    zoom_min, zoom_max, zoom_step = ZOOM_COLUMN_RANGE
+    return [
+        EntitySpec(
+            "select",
+            "ss_layout",
+            "SuperSource layout",
+            "ss_layout",
+            (),
+            False,
+            "mdi:view-grid-plus",
+            description=(
+                "Writes that look to SuperSource. Does not change Program or Preview. "
+                "Picking the same layout again sends it again."
+            ),
+        ),
+        EntitySpec(
+            "button",
+            "ss_apply",
+            "Apply SuperSource",
+            "ss_apply",
+            (),
+            False,
+            "mdi:send",
+            description=(
+                "Sends the selected layout again with the current sources, corner, and sizes. "
+                "Use this after a nudge. Changing a size does not send by itself."
+            ),
+        ),
+        EntitySpec(
+            "select",
+            "ss_role_screen",
+            "SuperSource screen",
+            "ss_role",
+            ("screen",),
+            False,
+            "mdi:tablet",
+            entity_category="config",
+            description="Screenshare. Background of a corner layout, and the large picture when cameras sit beside it. Not sent until you push a layout.",
+        ),
+        EntitySpec(
+            "select",
+            "ss_role_person1",
+            "SuperSource person 1",
+            "ss_role",
+            ("person1",),
+            False,
+            "mdi:account",
+            entity_category="config",
+            description="Close-up of person 1. Not sent until you push a layout.",
+        ),
+        EntitySpec(
+            "select",
+            "ss_role_person2",
+            "SuperSource person 2",
+            "ss_role",
+            ("person2",),
+            False,
+            "mdi:account-outline",
+            entity_category="config",
+            description="Close-up of person 2. Not sent until you push a layout.",
+        ),
+        EntitySpec(
+            "select",
+            "ss_role_wide",
+            "SuperSource wide",
+            "ss_role",
+            ("wide",),
+            False,
+            "mdi:account-group",
+            entity_category="config",
+            description="Wide shot used by Corner wide. Not sent until you push a layout.",
+        ),
+        EntitySpec(
+            "select",
+            "ss_corner",
+            "SuperSource corner",
+            "ss_corner",
+            (),
+            False,
+            "mdi:picture-in-picture-bottom-right",
+            entity_category="config",
+            description=f"Where the corner box sits. Default {CORNERS[0]}. Only corner layouts use it.",
+        ),
+        EntitySpec(
+            "number",
+            "ss_corner_size",
+            "SuperSource corner size",
+            "ss_tweak",
+            ("corner_size",),
+            False,
+            "mdi:resize",
+            entity_category="config",
+            min_value=size_min,
+            max_value=size_max,
+            step=size_step,
+            description=f"Corner box size, 1 is full frame. Default {DEFAULT_CORNER_SIZE}. Applied on the next push.",
+        ),
+        EntitySpec(
+            "number",
+            "ss_corner_margin",
+            "SuperSource corner margin",
+            "ss_tweak",
+            ("corner_margin",),
+            False,
+            "mdi:border-none-variant",
+            entity_category="config",
+            min_value=margin_min,
+            max_value=margin_max,
+            step=margin_step,
+            description=(
+                f"Gap between the corner box and the frame edge, in SuperSource units. "
+                f"Default {DEFAULT_CORNER_MARGIN}. Applied on the next push."
+            ),
+        ),
+        EntitySpec(
+            "number",
+            "ss_zoom_column",
+            "SuperSource camera column",
+            "ss_tweak",
+            ("zoom_column",),
+            False,
+            "mdi:arrow-expand-horizontal",
+            entity_category="config",
+            min_value=zoom_min,
+            max_value=zoom_max,
+            step=zoom_step,
+            description=(
+                f"Width of the camera column as a fraction of the frame. Only zoomed layouts use it. "
+                f"Default {DEFAULT_ZOOM_COLUMN}. Smaller zooms the faces and leaves the slides whole."
+            ),
+        ),
+    ]
 
 
 def programmable_labels(state: AtemState) -> list[str]:

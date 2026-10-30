@@ -158,7 +158,13 @@ def extra_attributes(state: AtemState, spec: EntitySpec) -> dict:
             if "source" in copied:
                 copied["source_name"] = state.input_label(copied["source"])
             boxes[str(index)] = copied
-        return {"boxes": boxes, "layout_verified_on_hardware": False}
+        return {
+            "boxes": boxes,
+            "art_fill": state.input_label(state.supersource_art) if state.supersource_art is not None else None,
+            "art_option": state.supersource_art_option,
+            "units": "x and y are SuperSource units (visible frame -16..16 by -9..9). Size 1 fills the frame.",
+            "layout_verified_on_hardware": False,
+        }
     if kind == "fader":
         source = state.fairlight_sources.get((spec.address[0], spec.address[1]))
         if not source:

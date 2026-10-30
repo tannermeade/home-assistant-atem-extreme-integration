@@ -154,6 +154,14 @@ class AtemClient:
     async def dsk_auto(self, index: int) -> None:
         await self._send("DDsA", struct.pack(">BBBB", index, 0, 0, 0))
 
+    async def apply_supersource(self, background: int, boxes) -> None:
+        """Write one SuperSource look. Does not change Program or Preview."""
+        from ..supersource import csbp_payload, cssc_payload
+
+        await self._send("CSSc", cssc_payload(background))
+        for index, box in enumerate(boxes):
+            await self._send("CSBP", csbp_payload(index, box))
+
     async def set_aux(self, index: int, source: int) -> None:
         await self._send("CAuS", struct.pack(">BBH", 0x01, index, source))
 

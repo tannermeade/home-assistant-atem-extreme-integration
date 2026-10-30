@@ -17,6 +17,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities) -> N
     def factory(coordinator: AtemCoordinator, spec: EntitySpec):
         if spec.kind == "talk_threshold":
             return AtemTalkThreshold(coordinator, spec)
+        if spec.kind == "ss_tweak":
+            return AtemSuperSourceNumber(coordinator, spec)
         return AtemNumber(coordinator, spec)
 
     async_setup_platform_entities(hass, entry, async_add_entities, "number", factory)
@@ -78,4 +80,34 @@ class AtemTalkThreshold(AtemEntity, RestoreNumber):
 
     async def async_set_native_value(self, value: float) -> None:
         self.coordinator.set_talk_threshold(self._spec.address, value)
+
+
+class AtemSuperSourceNumber(AtemEntity, RestoreNumber):
+    """Corner size, margin, or zoom column. Stored here until a layout is pushed."""
+
+    _attr_mode = NumberMode.BOX
+
+    def __init__(self, coordinator: AtemCoordinator, spec: EntitySpec) -> None:
+        super().__init__(coordinator, spec)
+        self._attr_native_min_value = spec.min_value if spec.min_value is not None else 0
+        self._attr_native_max_value = spec.max_value if spec.max_value is not None else 1
+        self._attr_native_step = spec.step if spec.step is not None else 0.01
+
+    @property
+    def available(self) -> bool:
+        return True
+
+    @property
+    def native_value(self) -> float:
+        field = self._spec.address[0]
+        return float(getattr(self.coordinator.ss, field))
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        last = await self.async_get_last_number_data()
+        if last is not None and last.native_value is not None:
+            self.coordinator.set_supersource_number(self._spec.address[0], float(last.native_value))
+
+    async def async_set_native_value(self, value: float) -> None:
+        self.coordinator.set_supersource_number(self._spec.address[0], value)
         self.async_write_ha_state()

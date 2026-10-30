@@ -78,7 +78,41 @@ Input names on program, preview, aux, and take buttons are the long names from t
 | Aux {n} | select | control | One per aux the switcher reports (`CAuS` / `AuxS`). |
 | Media player {n} | sensor | read-only | Still or clip index from `MPCE`. Changing the still is not exposed; the command exists in the protocol but was not wired because a wrong still index is annoying and untested. |
 | Multiview | sensor | read-only | Layout and window→source attributes (`MvPr`, `MvIn`). Only created when the switcher sends them. |
-| SuperSource | sensor | read-only | Box enabled and source. Position and size are parsed with the single-SuperSource `SSBP` layout and **not verified on hardware**. Attribute `layout_verified_on_hardware` is false. |
+| SuperSource | sensor | read-only | What is on the switcher now: each box's source, position, size, and crop, plus the art-fill source. Firmware 8 `SSBP` / `SSrc`. Not verified on hardware. |
+
+### SuperSource layouts
+
+Picking **SuperSource layout** writes that look immediately (`CSSc` for the background, then one `CSBP` per box). It does not cut Program or Preview. Put the Program select on the SuperSource input when you want it on air.
+
+The sources, corner, size, margin, and camera-column width are Home Assistant settings. Changing one does not touch the switcher. Press **Apply SuperSource**, or pick the layout again, to send the nudged version. They are restored after a restart and are not sent again until you do that. The layout select's `matches_switcher` attribute is false when the switcher is still showing the previous push.
+
+Defaults, until you change them: person 1, person 2, wide, and screen are the first four HDMI inputs, in that order. Corner is bottom right, size 0.30, margin 0.8. Zoomed layouts use a camera column of 0.25 of the frame.
+
+| Layout | What it writes |
+| --- | --- |
+| Corner wide | Screen is the full background. The wide shot is a box in the corner. |
+| Corner person 1 | Same, with person 1 in the corner. |
+| Corner person 2 | Same, with person 2 in the corner. |
+| Screen left, cameras right | Screen on the left, person 1 above person 2 on the right. All three stay 16:9, so there is black above and below. |
+| Screen right, cameras left | The same picture, flipped. |
+| Screen left, cameras right, zoomed | Narrower camera column. The close-ups are cropped on the sides; the screen is not. Less black. |
+| Screen right, cameras left, zoomed | Flipped zoomed look. |
+| … swapped | The same four, with person 2 on top and person 1 on the bottom. |
+| Boxes off | All four boxes off, background Black. |
+
+| Entity | Platform | Access | Notes |
+| --- | --- | --- | --- |
+| SuperSource layout | select | control | The push. Twelve looks. Attributes list the sources that will be used and whether the switcher matches. |
+| Apply SuperSource | button | control | Pushes the selected layout again. |
+| SuperSource screen / person 1 / person 2 / wide | select | config | Which inputs fill the roles. |
+| SuperSource corner | select | config | Bottom right, bottom left, top right, top left. Corner layouts only. |
+| SuperSource corner size | number | config | 0.15–0.45. 1 would be full frame. |
+| SuperSource corner margin | number | config | 0–3, gap to the frame edge. |
+| SuperSource camera column | number | config | 0.18–0.32. Zoomed layouts only. |
+
+Positions use the Software Control coordinate system (visible frame −16…16 by −9…9, positive Y up, size 1 = full frame). None of this has been tried on a switcher. Confirm one corner and one side-by-side on the multiview before an automation is allowed to drive it. Zoom crops are the likeliest number to be slightly off.
+
+An automation that starts a share sets the layout select. An automation that returns to a camera sets Program back to that input. The layout can stay loaded.
 
 ### Audio (Fairlight)
 
@@ -136,13 +170,14 @@ There are no custom services. Automations should call the select, switch, number
 python -m unittest tests.test_atem_extreme -v
 ```
 
-The suite checks the hello packet, Fairlight `FMLv` scaling, recording/streaming bitfields, the entity catalog for an 8-input Extreme-shaped snapshot, and a full UDP handshake against a fake switcher (session, init dump, `SFLN`, meter ingest, `CPgI`).
+The suite checks the hello packet, Fairlight `FMLv` scaling, recording/streaming bitfields, the entity catalog for an 8-input Extreme-shaped snapshot, SuperSource layout geometry and the firmware 8 `CSBP`/`CSSc`/`SSBP` layouts, and a full UDP handshake against a fake switcher (session, init dump, `SFLN`, meter ingest, `CPgI`).
 
 `python -m compileall custom_components/atem_extreme` is the syntax check. Full `hassfest` needs a Home Assistant core checkout, which this environment does not have. The manifest matches the current custom-integration shape: config flow, `local_push`, no PyPI requirements, `translations/en.json` in sync with `strings.json`.
 
 ## Known limitations
 
-- **No hardware test.** Expect to fix a field offset if a firmware build disagrees, especially SuperSource `SSBP`, preview-transition `CTPr`, and fade-to-black rate `FtbC`.
+- **No hardware test.** Expect to fix a field offset if a firmware build disagrees, especially SuperSource `SSBP` / `CSBP` / `CSSc` (firmware 8 layout, unverified on a real Extreme ISO), preview-transition `CTPr`, and fade-to-black rate `FtbC`.
+- SuperSource borders, per-box crops beyond the zoomed close-ups, and a second SuperSource are not exposed. The Mini Extreme has one SuperSource. Writing a layout while that input is already on air changes the picture live.
 - Fairlight EQ bands, compressor, gate, limiter, and input-gain knobs are visible only as attributes, not controls.
 - Dip, wipe, and DVE transition rates are not writable. Mix rate and fade-to-black rate are.
 - Media-player still selection, macros, camera control, chroma-key parameters, HyperDecks, and multiview layout changes are read-only or absent.

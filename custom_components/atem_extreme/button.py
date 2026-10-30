@@ -23,6 +23,9 @@ class AtemButton(AtemEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         try:
-            await async_write(self.coordinator.client, self._spec, True)
+            if self._spec.kind == "ss_apply":
+                await self.coordinator.async_apply_supersource()
+            else:
+                await async_write(self.coordinator.client, self._spec, True)
         except Exception as err:  # noqa: BLE001
             raise HomeAssistantError(str(err)) from err

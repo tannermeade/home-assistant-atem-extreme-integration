@@ -179,6 +179,8 @@ class AtemState:
     multiview_layout: dict[int, int] = field(default_factory=dict)
     multiview_windows: dict[tuple[int, int], int] = field(default_factory=dict)
     supersource_boxes: dict[int, dict] = field(default_factory=dict)
+    supersource_art: int | None = None
+    supersource_art_option: int | None = None
     init_complete: bool = False
     seen_commands: set[str] = field(default_factory=set)
 
@@ -671,21 +673,39 @@ def _on_mvin(state: AtemState, payload: bytes) -> str:
 
 
 def _on_ssbp(state: AtemState, payload: bytes) -> str:
-    # Single-supersource layout used by the Mini Extreme family:
-    # box, enabled, source, x, y, size. Marked unverified on hardware.
-    if len(payload) < 4:
+    # Firmware 8+ (Mini Extreme and later) puts the SuperSource id in byte 0.
+    # This integration targets that layout. A short pre-v8 payload is ignored.
+    if len(payload) < 22:
         return ""
-    box = payload[0]
+    box = payload[1]
     info = {
-        "enabled": payload[1] == 1,
-        "source": u16(payload, 2),
+        "ssrc": payload[0],
+        "enabled": payload[2] == 1,
+        "source": u16(payload, 4),
+        "x": i16(payload, 6) / 100.0,
+        "y": i16(payload, 8) / 100.0,
+        "size": u16(payload, 10) / 1000.0,
+        "cropped": payload[12] == 1,
+        "crop_top": u16(payload, 14) / 1000.0,
+        "crop_bottom": u16(payload, 16) / 1000.0,
+        "crop_left": u16(payload, 18) / 1000.0,
+        "crop_right": u16(payload, 20) / 1000.0,
     }
-    if len(payload) >= 10:
-        info["x"] = i16(payload, 4)
-        info["y"] = i16(payload, 6)
-        info["size"] = u16(payload, 8)
     state.supersource_boxes[box] = info
     return "state"
+
+
+def _on_ssrc(state: AtemState, payload: bytes) -> str:
+    # v8 SSrc is short: id, pad, fill at offset 2. The pre-v8 command is ~32 bytes.
+    if 13 <= len(payload) < 24:
+        state.supersource_art = u16(payload, 2)
+        if len(payload) > 6:
+            state.supersource_art_option = payload[6]
+        return "state"
+    if len(payload) >= 4:
+        state.supersource_art = u16(payload, 0)
+        return "state"
+    return ""
 
 
 def _on_incm(state: AtemState, payload: bytes) -> str:
@@ -742,5 +762,6 @@ _HANDLERS = {
     "MvPr": _on_mvpr,
     "MvIn": _on_mvin,
     "SSBP": _on_ssbp,
+    "SSrc": _on_ssrc,
     "InCm": _on_incm,
 }

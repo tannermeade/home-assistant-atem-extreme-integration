@@ -31,6 +31,9 @@ const GROUPS: { title: string; rows: [string, string, string][] }[] = [
       ["Aux output", "select", "Control"],
       ["Media player", "sensor", "Read-only"],
       ["Multiview", "sensor", "Read-only"],
+      ["SuperSource layout", "select", "Control"],
+      ["Apply SuperSource", "button", "Control"],
+      ["SuperSource roles, corner, size", "select / number", "Config"],
       ["SuperSource boxes", "sensor", "Read-only"],
     ],
   },
@@ -75,6 +78,14 @@ function Home() {
   const [master, setMaster] = useState(-14);
   const [thresholds, setThresholds] = useState<number[]>(() => INPUTS.map(() => -40));
   const [micThresholds, setMicThresholds] = useState([-40, -40]);
+  const [layout, setLayout] = useState(LAYOUTS[3]);
+  const [roles, setRoles] = useState({ screen: 3, person1: 0, person2: 1, wide: 2 });
+  const [corner, setCorner] = useState("Bottom right");
+  const [cornerSize, setCornerSize] = useState(0.3);
+  const [margin, setMargin] = useState(0.8);
+  const [column, setColumn] = useState(0.25);
+  const [onAir, setOnAir] = useState<BuiltLayout | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -93,6 +104,17 @@ function Home() {
     setPreview(program);
     setProgram(index);
     setBlack(false);
+  }
+
+  function pushLayout(name: string) {
+    setLayout(name);
+    setOnAir(buildLayout(name, roles, corner, cornerSize, margin, column));
+    setDirty(false);
+  }
+
+  function nudge(apply: () => void) {
+    apply();
+    setDirty(true);
   }
 
   return (
@@ -248,6 +270,129 @@ function Home() {
           </div>
         </section>
 
+        <section className="panel p-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-sm font-medium tracking-wide">SuperSource</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#b7b2a8]">
+                Pick a layout to push it. Sources, corner, and sizes wait until you push again. Program does not change.
+              </p>
+            </div>
+            <p className="text-[10px] tracking-widest text-[#9a958c] uppercase">
+              {dirty ? "Nudge not sent" : onAir ? "Matches the last push" : "Nothing pushed"}
+            </p>
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div>
+              <div className="relative aspect-video overflow-hidden border border-[#2c3038] bg-black">
+                {onAir ? (
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-[#6d727c] uppercase">
+                      {onAir.background}
+                    </div>
+                    {onAir.boxes.filter((box) => box.on).map((box) => (
+                      <div
+                        key={box.key}
+                        className="absolute flex items-center justify-center border border-black/40 text-center text-xs font-medium text-[#101114]"
+                        style={{ ...boxStyle(box), background: box.color }}
+                      >
+                        {box.label}
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-xs tracking-widest text-[#6d727c] uppercase">
+                    Preview of the last push
+                  </div>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-[#9a958c]">
+                This picture is the model of a push. A real switcher has not confirmed the crop numbers.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <label className="flex flex-col gap-1 text-[10px] tracking-widest text-[#9a958c] uppercase">
+                SuperSource layout
+                <select
+                  value={layout}
+                  onChange={(event) => pushLayout(event.target.value)}
+                  className="border border-[#2c3038] bg-[#14161b] px-2 py-2 text-sm text-[#eceae4]"
+                >
+                  {LAYOUTS.map((name) => (
+                    <option key={name}>{name}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ["screen", "Screen"],
+                    ["person1", "Person 1"],
+                    ["person2", "Person 2"],
+                    ["wide", "Wide"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="flex flex-col gap-1 text-[10px] tracking-widest text-[#9a958c] uppercase">
+                    {label}
+                    <select
+                      value={roles[key]}
+                      onChange={(event) =>
+                        nudge(() => setRoles((prev) => ({ ...prev, [key]: Number(event.target.value) })))
+                      }
+                      className="border border-[#2c3038] bg-[#14161b] px-2 py-2 text-sm text-[#eceae4]"
+                    >
+                      {INPUTS.map((name, index) => (
+                        <option key={name} value={index}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+              <label className="flex flex-col gap-1 text-[10px] tracking-widest text-[#9a958c] uppercase">
+                Corner
+                <select
+                  value={corner}
+                  onChange={(event) => nudge(() => setCorner(event.target.value))}
+                  className="border border-[#2c3038] bg-[#14161b] px-2 py-2 text-sm text-[#eceae4]"
+                >
+                  {["Bottom right", "Bottom left", "Top right", "Top left"].map((name) => (
+                    <option key={name}>{name}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <Stepper
+                  label="Corner size"
+                  value={cornerSize.toFixed(2)}
+                  down={() => nudge(() => setCornerSize((value) => clamp(value - 0.01, 0.15, 0.45)))}
+                  up={() => nudge(() => setCornerSize((value) => clamp(value + 0.01, 0.15, 0.45)))}
+                />
+                <Stepper
+                  label="Margin"
+                  value={margin.toFixed(1)}
+                  down={() => nudge(() => setMargin((value) => clamp(Math.round((value - 0.1) * 10) / 10, 0, 3)))}
+                  up={() => nudge(() => setMargin((value) => clamp(Math.round((value + 0.1) * 10) / 10, 0, 3)))}
+                />
+                <Stepper
+                  label="Column"
+                  value={column.toFixed(2)}
+                  down={() => nudge(() => setColumn((value) => clamp(Math.round((value - 0.01) * 100) / 100, 0.18, 0.32)))}
+                  up={() => nudge(() => setColumn((value) => clamp(Math.round((value + 0.01) * 100) / 100, 0.18, 0.32)))}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => pushLayout(layout)}
+                className="border border-[#eceae4] px-4 py-2 text-sm font-medium"
+              >
+                Apply SuperSource
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section className="grid gap-4 md:grid-cols-2">
           {GROUPS.map((group) => (
             <div key={group.title} className="panel p-4">
@@ -278,7 +423,7 @@ function Home() {
           </p>
           <p className="mt-2">
             No physical switcher was connected. Handshake, meter scaling, and the entity list are unit-tested against a
-            fake switcher. SuperSource geometry, USB control, stream keys, EQ, and dynamics controls are not claimed.
+            fake switcher. Zoomed SuperSource crops, USB control, stream keys, EQ, and dynamics controls are not claimed.
             Dip, wipe, and DVE rates are read-only. The full list and the limitations are in the README inside the download.
           </p>
         </section>
@@ -306,6 +451,118 @@ function Action({ children, onClick, active }: { children: string; onClick: () =
       {children}
     </button>
   );
+}
+
+function Stepper({ label, value, down, up }: { label: string; value: string; down: () => void; up: () => void }) {
+  return (
+    <div className="flex flex-col gap-1 text-[10px] tracking-widest text-[#9a958c] uppercase">
+      {label}
+      <div className="flex items-center gap-1">
+        <button type="button" aria-label={`Decrease ${label}`} onClick={down} className="border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]">
+          −
+        </button>
+        <span className="min-w-10 flex-1 text-center text-sm tabular-nums text-[#eceae4]">{value}</span>
+        <button type="button" aria-label={`Increase ${label}`} onClick={up} className="border border-[#2c3038] bg-[#101114] px-2 py-1 text-sm text-[#eceae4]">
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const LAYOUTS = [
+  "Corner wide",
+  "Corner person 1",
+  "Corner person 2",
+  "Screen left, cameras right",
+  "Screen right, cameras left",
+  "Screen left, cameras right, zoomed",
+  "Screen right, cameras left, zoomed",
+  "Screen left, cameras right, swapped",
+  "Screen right, cameras left, swapped",
+  "Screen left, cameras right, zoomed, swapped",
+  "Screen right, cameras left, zoomed, swapped",
+  "Boxes off",
+];
+
+type BuiltBox = { key: string; on: boolean; label: string; color: string; x: number; y: number; size: number; crop: number };
+type BuiltLayout = { background: string; boxes: BuiltBox[] };
+
+function buildLayout(
+  name: string,
+  roles: { screen: number; person1: number; person2: number; wide: number },
+  corner: string,
+  cornerSize: number,
+  margin: number,
+  column: number,
+): BuiltLayout {
+  const screen = INPUTS[roles.screen];
+  const person1 = INPUTS[roles.person1];
+  const person2 = INPUTS[roles.person2];
+  const wide = INPUTS[roles.wide];
+  const off = (): BuiltBox => ({ key: "off", on: false, label: "", color: "", x: 0, y: 0, size: 0.5, crop: 0 });
+  if (name === "Boxes off") {
+    return { background: "Black", boxes: [0, 1, 2, 3].map((key) => ({ ...off(), key: String(key) })) };
+  }
+  if (name.startsWith("Corner")) {
+    const source = name.endsWith("person 1") ? person1 : name.endsWith("person 2") ? person2 : wide;
+    const color = name.endsWith("person 1") ? "#e2b657" : name.endsWith("person 2") ? "#7dcea0" : "#d7d2c8";
+    const size = clamp(cornerSize, 0.15, 0.45);
+    const halfW = 16 * size;
+    const halfH = 9 * size;
+    const gap = Math.min(clamp(margin, 0, 3), Math.max(0, Math.min(16 - halfW, 9 - halfH)));
+    const signX = corner.endsWith("left") ? -1 : 1;
+    const signY = corner.startsWith("Top") ? 1 : -1;
+    return {
+      background: screen,
+      boxes: [
+        { key: "0", on: true, label: source, color, x: signX * (16 - halfW - gap), y: signY * (9 - halfH - gap), size, crop: 0 },
+        { ...off(), key: "1" },
+        { ...off(), key: "2" },
+        { ...off(), key: "3" },
+      ],
+    };
+  }
+  const zoom = name.includes("zoomed");
+  const swapped = name.includes("swapped");
+  const camerasOnRight = name.startsWith("Screen left");
+  const col = zoom ? clamp(column, 0.18, 0.32) : 1 / 3;
+  const screenSize = zoom ? 1 - col : 2 / 3;
+  const camSize = zoom ? screenSize / 2 : 1 / 3;
+  const crop = zoom ? Math.max(0, (32 * camSize - 32 * col) / 2) : 0;
+  const screenX = camerasOnRight ? -16 + 16 * screenSize : 16 - 16 * screenSize;
+  const camX = camerasOnRight ? 16 - 16 * col : -16 + 16 * col;
+  const dy = (9 * screenSize) / 2;
+  const top = swapped ? person2 : person1;
+  const bottom = swapped ? person1 : person2;
+  const topColor = swapped ? "#7dcea0" : "#e2b657";
+  const bottomColor = swapped ? "#e2b657" : "#7dcea0";
+  return {
+    background: "Black",
+    boxes: [
+      { key: "0", on: true, label: screen, color: "#8eb4e8", x: screenX, y: 0, size: screenSize, crop: 0 },
+      { key: "1", on: true, label: top, color: topColor, x: camX, y: dy, size: camSize, crop },
+      { key: "2", on: true, label: bottom, color: bottomColor, x: camX, y: -dy, size: camSize, crop },
+      { ...off(), key: "3" },
+    ],
+  };
+}
+
+function boxStyle(box: BuiltBox) {
+  const left = box.x - 16 * box.size + box.crop;
+  const right = box.x + 16 * box.size - box.crop;
+  const bottom = box.y - 9 * box.size;
+  const top = box.y + 9 * box.size;
+  return {
+    left: `${((left + 16) / 32) * 100}%`,
+    width: `${((right - left) / 32) * 100}%`,
+    top: `${((9 - top) / 18) * 100}%`,
+    height: `${((top - bottom) / 18) * 100}%`,
+  };
+}
+
+function clamp(value: number, low: number, high: number) {
+  return Math.min(high, Math.max(low, value));
 }
 
 function roundHalf(value: number) {
