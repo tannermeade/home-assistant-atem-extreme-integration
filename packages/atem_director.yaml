@@ -1,0 +1,367 @@
+# Talk-driven director for the ATEM Mini Extreme ISO integration.
+#
+# Install
+#   1. Copy this file to config/packages/atem_director.yaml
+#      (the folder next to configuration.yaml; create it if needed).
+#   2. Under the existing homeassistant: key in configuration.yaml, add:
+#        packages: !include_dir_named packages
+#      Do not add a second homeassistant: key.
+#   3. Restart Home Assistant. Packages are read at startup.
+#   4. Save the share looks on the switcher under these exact names:
+#        Share both, Share person 1, Share person 2
+#      Share wide is optional. To use it as the two-person share, set
+#      "ATEM share group layout" to Share wide.
+#   5. In Developer Tools → States, confirm the entity ids and the Program
+#      option text, and fix the helpers below if they differ.
+#   6. Turn on ATEM director. Leave it off while you are still saving layouts.
+#
+# What it will not do
+#   It never presses Save, Delete, or Apply, and it never changes corner,
+#   column, or role. It never listens to the iPad or the wide-camera strip.
+#   Picking Share writes the layout first, waits 0.3s, then cuts Program.
+
+input_boolean:
+  atem_director:
+    name: ATEM director
+    icon: mdi:movie-open
+
+input_select:
+  atem_director_mode:
+    name: ATEM director mode
+    icon: mdi:camera-switch
+    options:
+      - Interview
+      - Share
+    initial: Interview
+
+input_text:
+  atem_program_entity:
+    name: ATEM program entity
+    icon: mdi:television
+    initial: select.program
+    min: 1
+    max: 255
+    mode: text
+  atem_layout_entity:
+    name: ATEM layout entity
+    icon: mdi:picture-in-picture-bottom-right
+    initial: select.supersource_layout
+    min: 1
+    max: 255
+    mode: text
+  atem_camera_1:
+    name: ATEM camera 1 option
+    icon: mdi:video-input-hdmi
+    initial: Camera 1
+    min: 1
+    max: 64
+    mode: text
+  atem_camera_2:
+    name: ATEM camera 2 option
+    icon: mdi:video-input-hdmi
+    initial: Camera 2
+    min: 1
+    max: 64
+    mode: text
+  atem_camera_3:
+    name: ATEM camera 3 option
+    icon: mdi:video-input-hdmi
+    initial: Camera 3
+    min: 1
+    max: 64
+    mode: text
+  atem_supersource_option:
+    name: ATEM SuperSource option
+    icon: mdi:picture-in-picture-bottom-right
+    initial: SuperSource
+    min: 1
+    max: 64
+    mode: text
+  atem_layout_share_group:
+    name: ATEM share group layout
+    icon: mdi:account-multiple
+    initial: Share both
+    min: 1
+    max: 64
+    mode: text
+  atem_layout_share_person_1:
+    name: ATEM share person 1 layout
+    icon: mdi:account
+    initial: Share person 1
+    min: 1
+    max: 64
+    mode: text
+  atem_layout_share_person_2:
+    name: ATEM share person 2 layout
+    icon: mdi:account
+    initial: Share person 2
+    min: 1
+    max: 64
+    mode: text
+  atem_last_cut:
+    name: ATEM director last cut
+    initial: "0"
+    min: 1
+    max: 20
+    mode: text
+  atem_last_layout:
+    name: ATEM director last layout
+    initial: "0"
+    min: 1
+    max: 20
+    mode: text
+
+template:
+  - binary_sensor:
+      # Stable speech. The integration sensor drops the instant the meter does.
+      # Change these two entity ids if the voices are not Mic 1 and Mic 2.
+      # XLR inputs are binary_sensor.xlr_1_talking and binary_sensor.xlr_2_talking.
+      # HDMI audio is binary_sensor.camera_1_talking and binary_sensor.camera_2_talking,
+      # but only if that is actually the person's mic. Do not use the wide shot or the iPad.
+      - name: Person 1 speaking
+        unique_id: atem_person_1_speaking
+        availability: "{{ has_value('binary_sensor.mic_1_talking') }}"
+        state: "{{ is_state('binary_sensor.mic_1_talking', 'on') }}"
+        delay_on:
+          milliseconds: 400
+        delay_off:
+          seconds: 1
+      - name: Person 2 speaking
+        unique_id: atem_person_2_speaking
+        availability: "{{ has_value('binary_sensor.mic_2_talking') }}"
+        state: "{{ is_state('binary_sensor.mic_2_talking', 'on') }}"
+        delay_on:
+          milliseconds: 400
+        delay_off:
+          seconds: 1
+
+automation:
+  - id: atem_interview_director
+    alias: ATEM interview director
+    description: >
+      Cuts Program between camera 1, camera 2, and the wide shot.
+      Does nothing in Share mode. Does not change SuperSource.
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.person_1_speaking
+          - binary_sensor.person_2_speaking
+          - input_boolean.atem_director
+          - input_select.atem_director_mode
+      - platform: homeassistant
+        event: start
+    action:
+      - condition: state
+        entity_id: input_boolean.atem_director
+        state: "on"
+      - condition: state
+        entity_id: input_select.atem_director_mode
+        state: Interview
+      - condition: state
+        entity_id:
+          - binary_sensor.person_1_speaking
+          - binary_sensor.person_2_speaking
+        state:
+          - "on"
+          - "off"
+      - if:
+          - condition: template
+            value_template: "{{ trigger is defined and trigger.platform | default('') == 'homeassistant' }}"
+        then:
+          - delay: "00:00:15"
+          - condition: state
+            entity_id: input_boolean.atem_director
+            state: "on"
+          - condition: state
+            entity_id: input_select.atem_director_mode
+            state: Interview
+      - variables:
+          program_entity: "{{ states('input_text.atem_program_entity') | trim }}"
+          cam1: "{{ states('input_text.atem_camera_1') | trim }}"
+          cam2: "{{ states('input_text.atem_camera_2') | trim }}"
+          cam3: "{{ states('input_text.atem_camera_3') | trim }}"
+          supersource: "{{ states('input_text.atem_supersource_option') | trim }}"
+          current: "{{ states(states('input_text.atem_program_entity') | trim) }}"
+          p1: "{{ 'on' if is_state('binary_sensor.person_1_speaking', 'on') else 'off' }}"
+          p2: "{{ 'on' if is_state('binary_sensor.person_2_speaking', 'on') else 'off' }}"
+      - variables:
+          decision: "{% if p1 == 'on' and p2 == 'on' %}both{% elif p1 == 'on' %}p1{% elif p2 == 'on' %}p2{% else %}silence{% endif %}"
+          target: "{% if p1 == 'on' and p2 != 'on' %}{{ cam1 }}{% elif p2 == 'on' and p1 != 'on' %}{{ cam2 }}{% else %}{{ cam3 }}{% endif %}"
+          min_age: "{% if current == supersource %}0{% elif p1 == 'on' and p2 == 'on' %}1.5{% elif (p1 == 'on' or p2 == 'on') and current == cam3 %}0.6{% else %}3.5{% endif %}"
+      - condition: template
+        value_template: "{{ has_value(program_entity) and target | length > 0 and target != current }}"
+      - if:
+          - condition: template
+            value_template: "{{ decision == 'silence' and current != supersource }}"
+        then:
+          - delay: "00:00:04"
+          - condition: state
+            entity_id: input_boolean.atem_director
+            state: "on"
+          - condition: state
+            entity_id: input_select.atem_director_mode
+            state: Interview
+          - condition: state
+            entity_id: binary_sensor.person_1_speaking
+            state: "off"
+          - condition: state
+            entity_id: binary_sensor.person_2_speaking
+            state: "off"
+      - variables:
+          age_now: "{% set raw = states('input_text.atem_last_cut') | float(0) %}{% if raw <= 0 %}999{% else %}{{ as_timestamp(now()) - raw }}{% endif %}"
+      - variables:
+          hold: "{{ [0, (min_age | float(0)) - (age_now | float(999))] | max }}"
+      - if:
+          - condition: template
+            value_template: "{{ hold | float(0) > 0.05 }}"
+        then:
+          - delay:
+              milliseconds: "{{ (hold | float(0) * 1000) | int(0) }}"
+      - variables:
+          p1_now: "{{ 'on' if is_state('binary_sensor.person_1_speaking', 'on') else 'off' }}"
+          p2_now: "{{ 'on' if is_state('binary_sensor.person_2_speaking', 'on') else 'off' }}"
+      - variables:
+          decision_now: "{% if p1_now == 'on' and p2_now == 'on' %}both{% elif p1_now == 'on' %}p1{% elif p2_now == 'on' %}p2{% else %}silence{% endif %}"
+          current_now: "{{ states(program_entity) }}"
+      - condition: template
+        value_template: "{{ decision_now == decision and current_now != target }}"
+      - condition: state
+        entity_id: input_boolean.atem_director
+        state: "on"
+      - condition: state
+        entity_id: input_select.atem_director_mode
+        state: Interview
+      - action: select.select_option
+        target:
+          entity_id: "{{ program_entity }}"
+        data:
+          option: "{{ target }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.atem_last_cut
+        data:
+          value: "{{ now().timestamp() | int }}"
+
+  - id: atem_share_director
+    alias: ATEM share director
+    description: >
+      Puts SuperSource on air and swaps saved layouts. Does not change
+      Program again until the mode is set back to Interview.
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.person_1_speaking
+          - binary_sensor.person_2_speaking
+          - input_boolean.atem_director
+          - input_select.atem_director_mode
+      - platform: homeassistant
+        event: start
+    action:
+      - condition: state
+        entity_id: input_boolean.atem_director
+        state: "on"
+      - condition: state
+        entity_id: input_select.atem_director_mode
+        state: Share
+      - condition: state
+        entity_id:
+          - binary_sensor.person_1_speaking
+          - binary_sensor.person_2_speaking
+        state:
+          - "on"
+          - "off"
+      - if:
+          - condition: template
+            value_template: "{{ trigger is defined and trigger.platform | default('') == 'homeassistant' }}"
+        then:
+          - delay: "00:00:15"
+          - condition: state
+            entity_id: input_boolean.atem_director
+            state: "on"
+          - condition: state
+            entity_id: input_select.atem_director_mode
+            state: Share
+      - variables:
+          program_entity: "{{ states('input_text.atem_program_entity') | trim }}"
+          layout_entity: "{{ states('input_text.atem_layout_entity') | trim }}"
+          supersource: "{{ states('input_text.atem_supersource_option') | trim }}"
+          current_program: "{{ states(states('input_text.atem_program_entity') | trim) }}"
+          current_layout: "{{ states(states('input_text.atem_layout_entity') | trim) }}"
+          p1: "{{ 'on' if is_state('binary_sensor.person_1_speaking', 'on') else 'off' }}"
+          p2: "{{ 'on' if is_state('binary_sensor.person_2_speaking', 'on') else 'off' }}"
+      - variables:
+          decision: "{% if p1 == 'on' and p2 == 'on' %}both{% elif p1 == 'on' %}p1{% elif p2 == 'on' %}p2{% else %}silence{% endif %}"
+      - variables:
+          layout: "{% if decision == 'p1' %}{{ states('input_text.atem_layout_share_person_1') | trim }}{% elif decision == 'p2' %}{{ states('input_text.atem_layout_share_person_2') | trim }}{% else %}{{ states('input_text.atem_layout_share_group') | trim }}{% endif %}"
+      - condition: template
+        value_template: "{{ has_value(program_entity) and has_value(layout_entity) and layout | length > 0 }}"
+      - if:
+          - condition: template
+            value_template: "{{ current_program != supersource }}"
+        then:
+          - action: select.select_option
+            target:
+              entity_id: "{{ layout_entity }}"
+            data:
+              option: "{{ layout }}"
+          - delay:
+              milliseconds: 300
+          - condition: state
+            entity_id: input_boolean.atem_director
+            state: "on"
+          - condition: state
+            entity_id: input_select.atem_director_mode
+            state: Share
+          - action: select.select_option
+            target:
+              entity_id: "{{ program_entity }}"
+            data:
+              option: "{{ supersource }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.atem_last_layout
+            data:
+              value: "{{ now().timestamp() | int }}"
+          - action: input_text.set_value
+            target:
+              entity_id: input_text.atem_last_cut
+            data:
+              value: "{{ now().timestamp() | int }}"
+          - stop: "SuperSource is on air"
+      - condition: template
+        value_template: "{{ current_layout != layout }}"
+      - variables:
+          layout_age: "{% set raw = states('input_text.atem_last_layout') | float(0) %}{% if raw <= 0 %}999{% else %}{{ as_timestamp(now()) - raw }}{% endif %}"
+          solo_age: "{% if decision == 'p1' %}{{ (now() - states.binary_sensor.person_1_speaking.last_changed).total_seconds() }}{% elif decision == 'p2' %}{{ (now() - states.binary_sensor.person_2_speaking.last_changed).total_seconds() }}{% else %}999{% endif %}"
+      - variables:
+          need: "{% if decision in ['p1', 'p2'] %}{{ [5 - (layout_age | float(0)), 2 - (solo_age | float(0)), 0] | max }}{% elif decision == 'both' %}{{ [1.5 - (layout_age | float(0)), 0] | max }}{% else %}{{ [5 - (layout_age | float(0)), 0] | max }}{% endif %}"
+      - if:
+          - condition: template
+            value_template: "{{ need | float(0) > 0.05 }}"
+        then:
+          - delay:
+              milliseconds: "{{ (need | float(0) * 1000) | int(0) }}"
+      - variables:
+          p1_now: "{{ 'on' if is_state('binary_sensor.person_1_speaking', 'on') else 'off' }}"
+          p2_now: "{{ 'on' if is_state('binary_sensor.person_2_speaking', 'on') else 'off' }}"
+      - variables:
+          decision_now: "{% if p1_now == 'on' and p2_now == 'on' %}both{% elif p1_now == 'on' %}p1{% elif p2_now == 'on' %}p2{% else %}silence{% endif %}"
+      - condition: template
+        value_template: >
+          {{ decision_now == decision
+             and is_state('input_boolean.atem_director', 'on')
+             and is_state('input_select.atem_director_mode', 'Share')
+             and states(program_entity) == supersource
+             and states(layout_entity) != layout }}
+      - action: select.select_option
+        target:
+          entity_id: "{{ layout_entity }}"
+        data:
+          option: "{{ layout }}"
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.atem_last_layout
+        data:
+          value: "{{ now().timestamp() | int }}"

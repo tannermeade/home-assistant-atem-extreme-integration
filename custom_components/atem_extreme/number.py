@@ -80,6 +80,9 @@ class AtemTalkThreshold(AtemEntity, RestoreNumber):
 
     async def async_set_native_value(self, value: float) -> None:
         self.coordinator.set_talk_threshold(self._spec.address, value)
+        # The number service does not write state. Without this, the slider
+        # is redrawn from the previous state and snaps back to -40.
+        self.async_write_ha_state()
 
 
 class AtemSuperSourceNumber(AtemEntity, RestoreNumber):

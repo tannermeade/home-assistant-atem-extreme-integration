@@ -1,0 +1,526 @@
+title: ATEM
+views:
+  - title: Show
+    path: show
+    icon: mdi:television-play
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: On air
+            icon: mdi:television
+          - type: entity
+            entity: select.bedroom_office_atem_mini_extreme_iso_program
+            name: Program
+            icon: mdi:television
+          - type: entity
+            entity: select.bedroom_office_atem_mini_extreme_iso_preview
+            name: Preview
+            icon: mdi:monitor
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_cut
+                name: Cut
+                icon: mdi:content-cut
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_auto_transition
+                name: Auto
+                icon: mdi:play-speed
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_fade_to_black_trigger
+                name: Fade
+                icon: mdi:circle-half-full
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+          - type: heading
+            heading: Take
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_take_camera_1
+                name: Person 1
+                icon: mdi:numeric-1-box
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_take_camera_2
+                name: Person 2
+                icon: mdi:numeric-2-box
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_take_camera_3
+                name: Wide
+                icon: mdi:numeric-3-box
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_take_camera_4
+                name: iPad
+                icon: mdi:tablet
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                name: SuperSource
+                icon: mdi:picture-in-picture-bottom-right
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: perform-action
+                  perform_action: select.select_option
+                  target:
+                    entity_id: select.bedroom_office_atem_mini_extreme_iso_program
+                  data:
+                    option: SuperSource
+                hold_action:
+                  action: none
+          - type: entities
+            state_color: true
+            entities:
+              - entity: switch.bedroom_office_atem_mini_extreme_iso_fade_to_black
+                name: Faded to black
+              - entity: select.bedroom_office_atem_mini_extreme_iso_transition_style
+                name: Transition
+              - entity: number.bedroom_office_atem_mini_extreme_iso_mix_rate
+                name: Mix rate
+              - entity: binary_sensor.bedroom_office_atem_mini_extreme_iso_transition_in_progress
+                name: Transition running
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Director
+            icon: mdi:movie-open
+          - type: tile
+            entity: input_boolean.atem_director
+            name: Director
+            icon: mdi:movie-open
+            vertical: true
+            features:
+              - type: toggle
+          - type: entities
+            entities:
+              - entity: input_select.atem_director_mode
+                name: Mode
+          - type: markdown
+            content: >
+              {% set director = is_state('input_boolean.atem_director', 'on') %}
+              {% set mode = states('input_select.atem_director_mode') %}
+              {% set p1 = is_state('binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_1_talking', 'on') %}
+              {% set p2 = is_state('binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_2_talking', 'on') %}
+              {% set program = states('select.bedroom_office_atem_mini_extreme_iso_program') %}
+              {% if not director %}
+              Director is off. Nothing will cut.
+              {% elif mode == 'Share' %}
+              **Share.** Program is {{ program }}. The layout on deck is {{ states('select.bedroom_office_atem_mini_extreme_iso_supersource_layout') }}.
+              {% else %}
+              **Interview.** Program is {{ program }}.
+              {% endif %}
+
+              Person 1 is {{ 'talking' if p1 else 'quiet' }}. Person 2 is {{ 'talking' if p2 else 'quiet' }}.
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_1_talking
+                name: Person 1
+                icon: mdi:account-voice
+                color: red
+                vertical: true
+              - type: tile
+                entity: binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_2_talking
+                name: Person 2
+                icon: mdi:account-voice
+                color: amber
+                vertical: true
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_1_level
+                name: Mic 1
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_2_level
+                name: Mic 2
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+          - type: history-graph
+            title: Audio
+            hours_to_show: 0.05
+            entities:
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_1_level
+                name: Mic 1
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_2_level
+                name: Mic 2
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_1_level
+                name: Camera 1
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_2_level
+                name: Camera 2
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_3_level
+                name: Wide
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_4_level
+                name: iPad
+          - type: heading
+            heading: Camera levels
+            icon: mdi:video-input-hdmi
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_1_level
+                name: Camera 1
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_2_level
+                name: Camera 2
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_3_level
+                name: Wide
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+              - type: gauge
+                entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_4_level
+                name: iPad
+                unit: dB
+                min: -60
+                max: 0
+                needle: true
+                severity:
+                  green: -60
+                  yellow: -24
+                  red: -12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Record
+            icon: mdi:record-circle
+          - type: tile
+            entity: switch.bedroom_office_atem_mini_extreme_iso_recording
+            name: Recording
+            icon: mdi:record-circle
+            color: red
+            features:
+              - type: toggle
+          - type: tile
+            entity: sensor.bedroom_office_atem_mini_extreme_iso_recording_status
+            name: Record status
+            icon: mdi:harddisk
+          - type: tile
+            entity: sensor.bedroom_office_atem_mini_extreme_iso_recording_duration
+            name: Record time
+            icon: mdi:timer-outline
+          - type: tile
+            entity: switch.bedroom_office_atem_mini_extreme_iso_iso_record_all_inputs
+            name: ISO all inputs
+            icon: mdi:checkbox-multiple-marked
+            features:
+              - type: toggle
+          - type: tile
+            entity: switch.bedroom_office_atem_mini_extreme_iso_streaming
+            name: Streaming
+            icon: mdi:access-point
+            color: red
+            features:
+              - type: toggle
+          - type: tile
+            entity: sensor.bedroom_office_atem_mini_extreme_iso_streaming_status
+            name: Stream status
+            icon: mdi:broadcast
+          - type: heading
+            heading: Share look
+            icon: mdi:picture-in-picture-bottom-right
+          - type: entities
+            entities:
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_layout
+                name: Layout
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_supersource
+                name: On the switcher
+          - type: button
+            entity: button.bedroom_office_atem_mini_extreme_iso_apply_supersource
+            name: Push layout again
+            icon: mdi:upload
+            show_name: true
+            show_icon: true
+            show_state: false
+            tap_action:
+              action: toggle
+            hold_action:
+              action: none
+
+  - title: Levels
+    path: levels
+    icon: mdi:waveform
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Mics the director hears
+            icon: mdi:microphone
+          - type: markdown
+            content: >
+              Set each threshold a few dB above the level you see while that person is quiet.
+              The director uses these two sensors, not the camera strips.
+          - type: entities
+            state_color: true
+            entities:
+              - entity: binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_1_talking
+                name: Person 1 talking
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_1_level
+                name: Person 1 level
+              - entity: number.bedroom_office_atem_mini_extreme_iso_mic_1_talking_threshold
+                name: Person 1 threshold
+              - entity: binary_sensor.bedroom_office_atem_mini_extreme_iso_mic_2_talking
+                name: Person 2 talking
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_2_level
+                name: Person 2 level
+              - entity: number.bedroom_office_atem_mini_extreme_iso_mic_2_talking_threshold
+                name: Person 2 threshold
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_master_level
+                name: Master
+          - type: history-graph
+            title: Last ten minutes
+            hours_to_show: 0.17
+            entities:
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_1_level
+                name: Mic 1
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_mic_2_level
+                name: Mic 2
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_1_level
+                name: Camera 1
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_2_level
+                name: Camera 2
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_3_level
+                name: Wide
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_4_level
+                name: iPad
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_master_level
+                name: Master
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Camera strips
+            icon: mdi:video-input-hdmi
+          - type: markdown
+            content: >
+              Camera 1 is person 1, camera 2 is person 2, camera 3 is the wide shot, camera 4 is the iPad.
+              These do not drive the director. The wide shot and the iPad hear more than one thing.
+          - type: entities
+            state_color: true
+            entities:
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_1_level
+                name: Camera 1
+              - entity: number.bedroom_office_atem_mini_extreme_iso_camera_1_talking_threshold
+                name: Camera 1 threshold
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_2_level
+                name: Camera 2
+              - entity: number.bedroom_office_atem_mini_extreme_iso_camera_2_talking_threshold
+                name: Camera 2 threshold
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_3_level
+                name: Wide
+              - entity: number.bedroom_office_atem_mini_extreme_iso_camera_3_talking_threshold
+                name: Wide threshold
+              - entity: sensor.bedroom_office_atem_mini_extreme_iso_camera_4_level
+                name: iPad
+              - entity: number.bedroom_office_atem_mini_extreme_iso_camera_4_talking_threshold
+                name: iPad threshold
+
+  - title: Looks
+    path: looks
+    icon: mdi:picture-in-picture-bottom-right
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Push a look
+            icon: mdi:upload
+          - type: markdown
+            content: >
+              Picking a layout writes it. It does not cut Program.
+              Share mode is what puts SuperSource on air.
+
+              On the switcher: **{{ state_attr('select.bedroom_office_atem_mini_extreme_iso_supersource_layout', 'on_switcher') or 'unknown' }}**.
+              {% if is_state_attr('select.bedroom_office_atem_mini_extreme_iso_supersource_layout', 'matches_switcher', true) %}
+              That matches the selected layout.
+              {% else %}
+              The selected layout has not been pushed, or the switcher was changed somewhere else.
+              {% endif %}
+
+              Saved: {{ (state_attr('select.bedroom_office_atem_mini_extreme_iso_supersource_layout', 'saved_layouts') or []) | join(', ') or 'none yet' }}.
+          - type: entities
+            entities:
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_layout
+                name: Layout
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_apply_supersource
+                name: Push again
+                icon: mdi:upload
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+              - type: button
+                entity: button.bedroom_office_atem_mini_extreme_iso_save_supersource
+                name: Save current
+                icon: mdi:content-save
+                show_name: true
+                show_icon: true
+                show_state: false
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: none
+          - type: entities
+            entities:
+              - entity: text.bedroom_office_atem_mini_extreme_iso_supersource_save_name
+                name: Save name
+          - type: button
+            entity: button.bedroom_office_atem_mini_extreme_iso_delete_saved_supersource
+            name: Delete saved name
+            icon: mdi:delete
+            show_name: true
+            show_icon: true
+            show_state: false
+            tap_action:
+              action: toggle
+            hold_action:
+              action: none
+          - type: markdown
+            content: >
+              {% set boxes = state_attr('sensor.bedroom_office_atem_mini_extreme_iso_supersource', 'boxes') or {} %}
+              **What the switcher is reporting**
+
+              Background: {{ state_attr('sensor.bedroom_office_atem_mini_extreme_iso_supersource', 'art_fill') or 'not reported' }}
+
+              {% for index in ['0', '1', '2', '3'] %}
+              {% set box = boxes.get(index) %}
+              {% if box %}
+              Box {{ index | int + 1 }}: {{ 'on' if box.enabled else 'off' }}, {{ box.source_name or 'no source' }}, {{ box.x }} / {{ box.y }}, size {{ box.size }}
+
+              {% endif %}
+              {% endfor %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Built-in layouts
+            icon: mdi:tune
+          - type: markdown
+            content: >
+              These only change the twelve built-in layouts.
+              A saved snapshot ignores them until you push a built-in again and save over the name.
+          - type: entities
+            entities:
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_screen
+                name: Screen
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_person_1
+                name: Person 1
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_person_2
+                name: Person 2
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_wide
+                name: Wide
+              - entity: select.bedroom_office_atem_mini_extreme_iso_supersource_corner
+                name: Corner
+              - entity: number.bedroom_office_atem_mini_extreme_iso_supersource_corner_size
+                name: Corner size
+              - entity: number.bedroom_office_atem_mini_extreme_iso_supersource_corner_margin
+                name: Corner margin
+              - entity: number.bedroom_office_atem_mini_extreme_iso_supersource_camera_column
+                name: Camera column

@@ -165,6 +165,18 @@ Stream URL and stream key are deliberately not read. They are secrets and they a
 
 Created for external inputs (the 8 HDMI ports). Not created for Black, Color Bars, or media players.
 
+## Talk-driven director
+
+[packages/atem_director.yaml](packages/atem_director.yaml) is a Home Assistant package, not part of the HACS install. It adds **ATEM director** and **ATEM director mode** (Interview or Share).
+
+Interview cuts Program between camera 1, camera 2, and the wide shot. A person must stay over the threshold for 0.4 seconds to count, and 1 second under it to stop. Overlap cuts to the wide shot, but not until the current shot has been up for 1.5 seconds. A close-up has to stay up for 3.5 seconds. Leaving the wide shot for a close-up waits until that person has been the only speaker for 0.6 seconds. Four seconds of nobody talking returns to the wide shot. Coming back from a share cuts immediately.
+
+Share writes a saved layout, waits 0.3 seconds, then puts Program on SuperSource. After that, Program stays there. One person has to be the only speaker for 2 seconds, and the current layout has to have been up for 5 seconds, before the corner changes. Overlap returns to the group layout after 1.5 seconds. Silence returns to it after 5 seconds.
+
+The group layout defaults to the saved name `Share both`. Set **ATEM share group layout** to `Share wide` if that saved look should be the one used when both people are in the shot. Save `Share person 1` and `Share person 2` as well. The automations only select those names and Program. They do not press Save, Delete, or Apply.
+
+The package listens to `binary_sensor.mic_1_talking` and `binary_sensor.mic_2_talking`. Change those two lines if the voices are on the XLR or HDMI strips. Do not point them at the wide camera or the iPad.
+
 ## Services
 
 There are no custom services. Automations should call the select, switch, number, and button entities. That keeps the device registry, the logbook, and the voice assistants on the same entities.

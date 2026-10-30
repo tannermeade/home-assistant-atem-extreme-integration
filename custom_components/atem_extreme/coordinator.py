@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 import logging
+import time
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
@@ -66,7 +67,7 @@ class AtemCoordinator(DataUpdateCoordinator[AtemState]):
         self.talk_thresholds[address] = clamp_talk_threshold(value)
         # Talking sensors listen to the meter coordinator, so a threshold
         # change updates them even when the switcher has not sent a new sample.
-        self.meters.async_set_updated_data(self.hass.loop.time())
+        self.meters.async_set_updated_data(time.monotonic())
 
     def resolved_roles(self) -> dict[str, int]:
         defaults = default_roles(self.client.state)
@@ -222,4 +223,4 @@ class AtemCoordinator(DataUpdateCoordinator[AtemState]):
             return
         # The payload is only a tick. Sensors read the live meter values so a
         # quiet input still resolves, and we never store 10 Hz history.
-        self.meters.async_set_updated_data(self.hass.loop.time())
+        self.meters.async_set_updated_data(time.monotonic())
