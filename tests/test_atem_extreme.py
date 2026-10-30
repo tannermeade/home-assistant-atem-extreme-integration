@@ -417,6 +417,60 @@ class SuperSourceTests(unittest.TestCase):
         self.assertIn("Screen left, cameras right, zoomed, swapped", preset_names())
         self.assertIn("Boxes off", preset_names())
         self.assertTrue(specs["supersource"].read_only)
+        self.assertEqual(specs["ss_save"].platform, "button")
+        self.assertEqual(specs["ss_save_name"].platform, "text")
+        self.assertEqual(specs["ss_delete"].platform, "button")
+        self.assertFalse(specs["ss_save"].read_only)
+
+    def test_a_live_layout_can_be_saved_and_written_back(self) -> None:
+        from custom_components.atem_extreme.atem.protocol import AtemCommand
+        from custom_components.atem_extreme.supersource import (
+            SuperSourceAdjustments,
+            build_preset,
+            capture_layout,
+            cssc_payload,
+            layout_from_dict,
+            layout_matches,
+            layout_to_dict,
+            matching_preset,
+        )
+
+        roles = self._roles()
+        adjustments = SuperSourceAdjustments(corner="Top left", corner_size=0.22, corner_margin=1.2)
+        original = build_preset("Corner person 1", roles, adjustments)
+        state = AtemState()
+        for index, box in enumerate(original.boxes):
+            state.apply(AtemCommand("SSBP", _ssbp_echo(index, box)))
+        # Drop one box, the way a switcher can omit a disabled box.
+        del state.supersource_boxes[3]
+        state.apply(AtemCommand("SSrc", _ssrc_echo(original.background)))
+        state.supersource_art_option = 0
+
+        with self.assertRaises(ValueError):
+            capture_layout(state, "Corner person 1")
+        with self.assertRaises(ValueError):
+            capture_layout(state, "   ")
+
+        saved = capture_layout(state, "  iPad corner  ")
+        self.assertEqual(saved.name, "iPad corner")
+        self.assertEqual(saved.background, original.background)
+        self.assertFalse(saved.boxes[3].enabled)
+        self.assertEqual(saved.boxes[0].source, 1)
+        state.supersource_boxes[3] = {"enabled": False, "source": 0, "x": 0, "y": 0, "size": 0.5}
+        self.assertTrue(layout_matches(state, saved))
+        restored = layout_from_dict(layout_to_dict(saved))
+        self.assertEqual(restored.boxes[0].source, saved.boxes[0].source)
+        self.assertAlmostEqual(restored.boxes[0].x, saved.boxes[0].x, places=3)
+        self.assertEqual(
+            matching_preset(state, roles, SuperSourceAdjustments(layout=saved.name), {saved.name: restored}),
+            "iPad corner",
+        )
+        art = cssc_payload(4, art_option=1)
+        self.assertEqual(art[6], 1)
+
+        empty = AtemState()
+        with self.assertRaises(ValueError):
+            capture_layout(empty, "Nothing yet")
 
     def _extreme_state(self) -> AtemState:
         state = AtemState()

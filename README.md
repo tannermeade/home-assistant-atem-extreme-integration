@@ -86,6 +86,8 @@ Picking **SuperSource layout** writes that look immediately (`CSSc` for the back
 
 The sources, corner, size, margin, and camera-column width are Home Assistant settings. Changing one does not touch the switcher. Press **Apply SuperSource**, or pick the layout again, to send the nudged version. They are restored after a restart and are not sent again until you do that. The layout select's `matches_switcher` attribute is false when the switcher is still showing the previous push.
 
+To keep a look you built on the switcher, type a name in **SuperSource save name** and press **Save SuperSource**. That stores the four boxes and the background the switcher is reporting, and the name shows up in **SuperSource layout**. Picking it later writes that snapshot back. It does not follow the corner size or the role selects; those only affect the built-in layouts. Saving the same name again replaces the snapshot. **Delete saved SuperSource** removes that name. Built-in names cannot be saved over or deleted. Saved layouts are kept in Home Assistant across restarts. A box the switcher has not reported is stored as off. If the background has not been reported yet, a later push leaves the background alone.
+
 Defaults, until you change them: person 1, person 2, wide, and screen are the first four HDMI inputs, in that order. Corner is bottom right, size 0.30, margin 0.8. Zoomed layouts use a camera column of 0.25 of the frame.
 
 | Layout | What it writes |
@@ -102,8 +104,11 @@ Defaults, until you change them: person 1, person 2, wide, and screen are the fi
 
 | Entity | Platform | Access | Notes |
 | --- | --- | --- | --- |
-| SuperSource layout | select | control | The push. Twelve looks. Attributes list the sources that will be used and whether the switcher matches. |
+| SuperSource layout | select | control | The push. Twelve built-in looks, plus any you have saved. Attributes list the sources that will be used, the saved names, and whether the switcher matches. |
 | Apply SuperSource | button | control | Pushes the selected layout again. |
+| SuperSource save name | text | config | The name for the next save or delete. |
+| Save SuperSource | button | control | Copies the SuperSource currently on the switcher into that name. Does not change the picture. |
+| Delete saved SuperSource | button | config | Removes that saved name. |
 | SuperSource screen / person 1 / person 2 / wide | select | config | Which inputs fill the roles. |
 | SuperSource corner | select | config | Bottom right, bottom left, top right, top left. Corner layouts only. |
 | SuperSource corner size | number | config | 0.15–0.45. 1 would be full frame. |

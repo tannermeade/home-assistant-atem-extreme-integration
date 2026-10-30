@@ -858,6 +858,41 @@ def _supersource_controls(state: AtemState) -> list[EntitySpec]:
                 f"Default {DEFAULT_ZOOM_COLUMN}. Smaller zooms the faces and leaves the slides whole."
             ),
         ),
+        EntitySpec(
+            "text",
+            "ss_save_name",
+            "SuperSource save name",
+            "ss_save_name",
+            (),
+            False,
+            "mdi:rename",
+            entity_category="config",
+            description="Name used by Save and Delete. Not sent to the switcher. Built-in layout names cannot be reused.",
+        ),
+        EntitySpec(
+            "button",
+            "ss_save",
+            "Save SuperSource",
+            "ss_save",
+            (),
+            False,
+            "mdi:content-save",
+            description=(
+                "Stores the SuperSource currently on the switcher under SuperSource save name. "
+                "The name is then another layout you can push. Saving does not change the picture."
+            ),
+        ),
+        EntitySpec(
+            "button",
+            "ss_delete",
+            "Delete saved SuperSource",
+            "ss_delete",
+            (),
+            False,
+            "mdi:delete",
+            entity_category="config",
+            description="Removes the saved layout named in SuperSource save name. Built-in layouts stay.",
+        ),
     ]
 
 

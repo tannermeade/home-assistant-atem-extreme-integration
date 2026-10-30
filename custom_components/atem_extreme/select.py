@@ -18,7 +18,7 @@ from .catalog import (
 from .coordinator import AtemCoordinator
 from .entity import AtemEntity
 from .platforms import async_setup_platform_entities
-from .supersource import CORNERS, preset_names
+from .supersource import CORNERS
 from .values import async_write, read_value
 
 _UNKNOWN = {"unknown", "unavailable", ""}
@@ -77,7 +77,7 @@ class AtemSuperSourceSelect(AtemEntity, RestoreEntity, SelectEntity):
     @property
     def options(self) -> list[str]:
         if self._spec.kind == "ss_layout":
-            return preset_names()
+            return self.coordinator.layout_names()
         if self._spec.kind == "ss_corner":
             return list(CORNERS)
         labels = programmable_labels(self.coordinator.client.state)
@@ -109,7 +109,7 @@ class AtemSuperSourceSelect(AtemEntity, RestoreEntity, SelectEntity):
         if last is None or last.state in _UNKNOWN:
             return
         kind = self._spec.kind
-        if kind == "ss_layout" and last.state in preset_names():
+        if kind == "ss_layout" and last.state in self.coordinator.layout_names():
             self.coordinator.remember_supersource_layout(last.state)
         elif kind == "ss_corner" and last.state in CORNERS:
             self.coordinator.set_supersource_corner(last.state)

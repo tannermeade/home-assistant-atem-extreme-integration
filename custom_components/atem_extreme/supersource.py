@@ -73,8 +73,9 @@ class Preset:
 @dataclass(frozen=True)
 class BuiltLayout:
     name: str
-    background: int
+    background: int | None
     boxes: tuple[Box, Box, Box, Box]
+    art_option: int = 0
 
 
 @dataclass
@@ -87,6 +88,7 @@ class SuperSourceAdjustments:
     corner_size: float = DEFAULT_CORNER_SIZE
     corner_margin: float = DEFAULT_CORNER_MARGIN
     zoom_column: float = DEFAULT_ZOOM_COLUMN
+    save_name: str = ""
 
 
 PRESETS: tuple[Preset, ...] = (
@@ -124,6 +126,67 @@ ROLES = ("screen", "person1", "person2", "wide")
 
 def preset_names() -> list[str]:
     return [preset.name for preset in PRESETS]
+
+
+MAX_LAYOUT_NAME = 40
+
+
+def clean_layout_name(name: str) -> str:
+    """A saved-layout name. Built-in names are reserved."""
+    cleaned = " ".join(str(name).split())
+    if not cleaned:
+        raise ValueError("Enter a name in SuperSource save name first.")
+    if len(cleaned) > MAX_LAYOUT_NAME:
+        raise ValueError(f"Use a name of {MAX_LAYOUT_NAME} characters or fewer.")
+    if cleaned in _PRESET_BY_NAME:
+        raise ValueError(f"{cleaned} is a built-in layout. Choose another name.")
+    return cleaned
+
+
+def capture_layout(state: AtemState, name: str) -> BuiltLayout:
+    """Snapshot the SuperSource the switcher is reporting right now."""
+    cleaned = clean_layout_name(name)
+    if not state.supersource_boxes:
+        raise ValueError("The switcher has not reported a SuperSource layout yet.")
+    boxes = []
+    for index in range(4):
+        info = state.supersource_boxes.get(index)
+        boxes.append(_off() if info is None else _box_from_reported(info))
+    option = 0 if state.supersource_art_option is None else int(state.supersource_art_option)
+    return BuiltLayout(cleaned, state.supersource_art, tuple(boxes), option)
+
+
+def layout_to_dict(built: BuiltLayout) -> dict:
+    return {
+        "name": built.name,
+        "background": built.background,
+        "art_option": built.art_option,
+        "boxes": [
+            {
+                "enabled": box.enabled,
+                "source": box.source,
+                "x": box.x,
+                "y": box.y,
+                "size": box.size,
+                "crop_top": box.crop_top,
+                "crop_bottom": box.crop_bottom,
+                "crop_left": box.crop_left,
+                "crop_right": box.crop_right,
+            }
+            for box in built.boxes
+        ],
+    }
+
+
+def layout_from_dict(data: dict) -> BuiltLayout:
+    raw_boxes = data.get("boxes")
+    if not isinstance(raw_boxes, list) or len(raw_boxes) != 4:
+        raise ValueError("Saved layout is missing its four boxes.")
+    boxes = tuple(_box_from_reported(item) for item in raw_boxes)
+    background = data.get("background")
+    if background is not None:
+        background = int(background)
+    return BuiltLayout(str(data["name"]), background, boxes, int(data.get("art_option") or 0))
 
 
 def clamp_corner_size(value: float) -> float:
@@ -198,19 +261,23 @@ def csbp_payload(index: int, box: Box, ssrc: int = 0) -> bytes:
     return bytes(buf)
 
 
-def cssc_payload(fill: int, ssrc: int = 0) -> bytes:
-    """Firmware 8 `CSSc`. Art fill, and art option forced to background."""
+def cssc_payload(fill: int, ssrc: int = 0, art_option: int = 0) -> bytes:
+    """Firmware 8 `CSSc`. Art fill, plus whether that art sits behind the boxes."""
     buf = bytearray(16)
     buf[0] = _ART_MASK
     buf[1] = ssrc & 0xFF
     struct.pack_into(">H", buf, 2, fill & 0xFFFF)
-    buf[6] = 0
+    buf[6] = art_option & 0xFF
     return bytes(buf)
 
 
 def layout_matches(state: AtemState, built: BuiltLayout) -> bool:
     """True when the parsed boxes (and art fill, if known) are this layout."""
-    if state.supersource_art is not None and state.supersource_art != built.background:
+    if (
+        built.background is not None
+        and state.supersource_art is not None
+        and state.supersource_art != built.background
+    ):
         return False
     if len(state.supersource_boxes) < 4:
         return False
@@ -222,7 +289,10 @@ def layout_matches(state: AtemState, built: BuiltLayout) -> bool:
 
 
 def matching_preset(
-    state: AtemState, roles: dict[str, int], adjustments: SuperSourceAdjustments
+    state: AtemState,
+    roles: dict[str, int],
+    adjustments: SuperSourceAdjustments,
+    saved: dict[str, BuiltLayout] | None = None,
 ) -> str | None:
     hits = []
     for preset in PRESETS:
@@ -232,6 +302,9 @@ def matching_preset(
             continue
         if layout_matches(state, built):
             hits.append(preset.name)
+    for name, built in (saved or {}).items():
+        if layout_matches(state, built):
+            hits.append(name)
     if adjustments.layout in hits:
         return adjustments.layout
     return hits[0] if hits else None
@@ -293,6 +366,20 @@ def _place_corner(size: float, margin: float, corner: str) -> tuple[float, float
 
 def _off() -> Box:
     return Box(False, 0, 0.0, 0.0, 0.5)
+
+
+def _box_from_reported(info: dict) -> Box:
+    return Box(
+        enabled=bool(info.get("enabled")),
+        source=int(info.get("source", 0)),
+        x=float(info.get("x", 0.0)),
+        y=float(info.get("y", 0.0)),
+        size=float(info.get("size", 0.5)),
+        crop_top=float(info.get("crop_top", 0.0)),
+        crop_bottom=float(info.get("crop_bottom", 0.0)),
+        crop_left=float(info.get("crop_left", 0.0)),
+        crop_right=float(info.get("crop_right", 0.0)),
+    )
 
 
 def _same_box(reported: dict, box: Box) -> bool:

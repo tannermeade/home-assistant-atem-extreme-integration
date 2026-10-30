@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -33,6 +33,8 @@ const GROUPS: { title: string; rows: [string, string, string][] }[] = [
       ["Multiview", "sensor", "Read-only"],
       ["SuperSource layout", "select", "Control"],
       ["Apply SuperSource", "button", "Control"],
+      ["Save SuperSource", "button", "Control"],
+      ["SuperSource save name", "text", "Config"],
       ["SuperSource roles, corner, size", "select / number", "Config"],
       ["SuperSource boxes", "sensor", "Read-only"],
     ],
@@ -86,6 +88,11 @@ function Home() {
   const [column, setColumn] = useState(0.25);
   const [onAir, setOnAir] = useState<BuiltLayout | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [saved, setSaved] = useState<Record<string, BuiltLayout>>({});
+  const [saveNote, setSaveNote] = useState("");
+  const savedRef = useRef(saved);
+  savedRef.current = saved;
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -108,8 +115,48 @@ function Home() {
 
   function pushLayout(name: string) {
     setLayout(name);
-    setOnAir(buildLayout(name, roles, corner, cornerSize, margin, column));
+    const snap = savedRef.current[name];
+    setOnAir(snap ? cloneLayout(snap) : buildLayout(name, roles, corner, cornerSize, margin, column));
     setDirty(false);
+  }
+
+  function saveCurrent() {
+    const cleaned = saveName.trim().replace(/\s+/g, " ");
+    if (!onAir) {
+      setSaveNote("Push a layout first, then save that picture.");
+      return;
+    }
+    if (!cleaned) {
+      setSaveNote("Enter a name.");
+      return;
+    }
+    if ((LAYOUTS as readonly string[]).includes(cleaned)) {
+      setSaveNote("That name is a built-in layout.");
+      return;
+    }
+    const next = { ...savedRef.current, [cleaned]: cloneLayout(onAir) };
+    savedRef.current = next;
+    setSaved(next);
+    setLayout(cleaned);
+    setSaveName(cleaned);
+    setDirty(false);
+    setSaveNote(`Saved “${cleaned}”. It is now a layout option.`);
+  }
+
+  function deleteSaved() {
+    const cleaned = saveName.trim().replace(/\s+/g, " ");
+    if (!savedRef.current[cleaned]) {
+      setSaveNote(
+        (LAYOUTS as readonly string[]).includes(cleaned) ? "Built-in layouts stay." : "No saved layout with that name.",
+      );
+      return;
+    }
+    const next = { ...savedRef.current };
+    delete next[cleaned];
+    savedRef.current = next;
+    setSaved(next);
+    if (layout === cleaned) setLayout(LAYOUTS[3]);
+    setSaveNote(`Deleted “${cleaned}”.`);
   }
 
   function nudge(apply: () => void) {
@@ -275,7 +322,8 @@ function Home() {
             <div>
               <h2 className="text-sm font-medium tracking-wide">SuperSource</h2>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#b7b2a8]">
-                Pick a layout to push it. Sources, corner, and sizes wait until you push again. Program does not change.
+                Pick a layout to push it. Save keeps the picture that is up, under a name you can push again later.
+                Sources and sizes wait until the next push, and they do not change a saved snapshot.
               </p>
             </div>
             <p className="text-[10px] tracking-widest text-[#9a958c] uppercase">
@@ -318,7 +366,7 @@ function Home() {
                   onChange={(event) => pushLayout(event.target.value)}
                   className="border border-[#2c3038] bg-[#14161b] px-2 py-2 text-sm text-[#eceae4]"
                 >
-                  {LAYOUTS.map((name) => (
+                  {[...LAYOUTS, ...Object.keys(saved).sort()].map((name) => (
                     <option key={name}>{name}</option>
                   ))}
                 </select>
@@ -389,6 +437,25 @@ function Home() {
               >
                 Apply SuperSource
               </button>
+              <label className="flex flex-col gap-1 text-[10px] tracking-widest text-[#9a958c] uppercase">
+                Save name
+                <input
+                  value={saveName}
+                  maxLength={40}
+                  onChange={(event) => setSaveName(event.target.value)}
+                  placeholder="iPad corner"
+                  className="border border-[#2c3038] bg-[#14161b] px-2 py-2 text-sm text-[#eceae4] placeholder:text-[#6d727c]"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={saveCurrent} className="border border-[#3a3e46] px-4 py-2 text-sm">
+                  Save SuperSource
+                </button>
+                <button type="button" onClick={deleteSaved} className="border border-[#3a3e46] px-4 py-2 text-sm text-[#9a958c]">
+                  Delete saved
+                </button>
+              </div>
+              {saveNote ? <p className="text-xs text-[#b7b2a8]">{saveNote}</p> : null}
             </div>
           </div>
         </section>
@@ -451,6 +518,10 @@ function Action({ children, onClick, active }: { children: string; onClick: () =
       {children}
     </button>
   );
+}
+
+function cloneLayout(layout: BuiltLayout): BuiltLayout {
+  return { background: layout.background, boxes: layout.boxes.map((box) => ({ ...box })) };
 }
 
 function Stepper({ label, value, down, up }: { label: string; value: string; down: () => void; up: () => void }) {

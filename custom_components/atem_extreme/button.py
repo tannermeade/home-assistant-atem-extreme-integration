@@ -21,10 +21,20 @@ class AtemButton(AtemEntity, ButtonEntity):
     def __init__(self, coordinator: AtemCoordinator, spec: EntitySpec) -> None:
         super().__init__(coordinator, spec)
 
+    @property
+    def available(self) -> bool:
+        if self._spec.kind == "ss_delete":
+            return True
+        return super().available
+
     async def async_press(self) -> None:
         try:
             if self._spec.kind == "ss_apply":
                 await self.coordinator.async_apply_supersource()
+            elif self._spec.kind == "ss_save":
+                await self.coordinator.async_save_supersource()
+            elif self._spec.kind == "ss_delete":
+                await self.coordinator.async_delete_saved_supersource()
             else:
                 await async_write(self.coordinator.client, self._spec, True)
         except Exception as err:  # noqa: BLE001
